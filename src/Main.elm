@@ -15,34 +15,49 @@ main =
 -- MODEL
 
 type alias Model =
-  { mousePos : Position }
+  { mousePos : Position
+  , mouseDown : Bool }
 
 init : (Model, Cmd Msg)
-init = ({ mousePos = {x = 0, y = 0} }, loadCanvas ())
+init = (
+  { mousePos = {x = 0, y = 0}
+  , mouseDown = False
+  },
+  loadCanvas ())
 
 -- UPDATE
 
 type Msg = CanvasMouseMoved Position
+  | CanvasMouseDown
+  | CanvasMouseUp
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     CanvasMouseMoved position ->
-      ({ mousePos = position }, Cmd.none)
+      ({ model | mousePos = position }, Cmd.none)
+    CanvasMouseDown ->
+      ({ model | mouseDown = True }, Cmd.none)
+    CanvasMouseUp ->
+      ({ model | mouseDown = False }, Cmd.none)
 
 
 -- SUBSCRIPTIONS
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-  canvasMouseMoved CanvasMouseMoved
+  Sub.batch
+    [ canvasMouseMoved CanvasMouseMoved
+    , canvasMouseDown (\_ -> CanvasMouseDown)
+    , canvasMouseUp (\_ -> CanvasMouseUp)
+    ]
 
 -- VIEW
 
 view : Model -> Html Msg
 view model =
   div []
-    [ div [] [ text ("Mouse pos: " ++ (toString model.mousePos)) ]
+    [ div [] [ text ("Model: " ++ (toString model)) ]
     , div [ style [("width", "800px"), ("padding", "0"), ("margin", "auto"), ("display", "block")] ]
       [ h1 [] [ text "Quick Draw" ]
       , canvas [ id "mycanvas", width 800, height 600, style [("border", "1px solid")] ] []
