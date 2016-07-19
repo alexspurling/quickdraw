@@ -1,11 +1,12 @@
 module Main exposing (..)
 
 import Canvas exposing (..)
-import Color exposing (Color, black, Gradient)
+import Colours exposing (Colour)
 import Collage
 import Element
 import Html exposing (Html, button, div, text, h1, canvas)
 import Html.Attributes exposing (id, height, width, style)
+import Html.Events exposing (onClick)
 import Html.App as App
 import Mouse exposing (Position)
 
@@ -16,12 +17,14 @@ main =
 
 type alias Model =
   { mousePos : Position
-  , mouseDown : Bool }
+  , mouseDown : Bool
+  , curColour : Colour }
 
 init : (Model, Cmd Msg)
 init = (
   { mousePos = {x = 0, y = 0}
-  , mouseDown = False }
+  , mouseDown = False
+  , curColour = Colours.Black }
   , loadCanvas ())
 
 -- UPDATE
@@ -29,16 +32,26 @@ init = (
 type Msg = CanvasMouseMoved MouseMovedEvent
   | CanvasMouseDown
   | CanvasMouseUp
+  | ColourSelected Colour
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     CanvasMouseMoved event ->
-      ({ model | mousePos = event.mousePos, mouseDown = event.mouseDown }, Cmd.none)
+      let
+        line =
+          { from = model.mousePos
+          , to = event.mousePos
+          , colour = (Colours.toHex model.curColour) }
+        drawLineCmd = if event.mouseDown then drawLine line else Cmd.none
+      in
+        ({ model | mousePos = event.mousePos, mouseDown = event.mouseDown }, drawLineCmd)
     CanvasMouseDown ->
       ({ model | mouseDown = True }, Cmd.none)
     CanvasMouseUp ->
       ({ model | mouseDown = False }, Cmd.none)
+    ColourSelected colour ->
+      ({ model | curColour = colour }, Cmd.none)
 
 
 -- SUBSCRIPTIONS
@@ -53,12 +66,49 @@ subscriptions model =
 
 -- VIEW
 
+mainDivStyle =
+  [
+  ("woidth", "800px")
+  , ("padding", "0")
+  , ("margin", "auto")
+  , ("display", "block") ]
+
+canvasDivStyle =
+  [ ("position", "relative" ) ]
+
+colourStyle index colour =
+  let
+    left = 20 + (index % 10 * 30)
+    top = 20 + (index // 10 * 30)
+  in
+    [ ("width", "25px")
+    , ("height", "25px")
+    , ("background-color", colour)
+    , ("position", "absolute")
+    , ("left", (toString left) ++ "px")
+    , ("top", (toString top) ++ "px") ]
+
+colourPicker index colour =
+  div
+  [ style (colourStyle index (Colours.toHex colour))
+  , onClick (ColourSelected colour) ] []
+
+colourPalette =
+  div [ ]
+    (List.indexedMap colourPicker Colours.allColours)
+
+canvasStyle =
+  [ ("border", "1px solid")
+  , ("cursor", "pointer") ]
+
 view : Model -> Html Msg
 view model =
   div []
-    [ div [] [ text ("Model: " ++ (toString model)) ]
-    , div [ style [("width", "800px"), ("padding", "0"), ("margin", "auto"), ("display", "block")] ]
+    [ div [ style mainDivStyle ]
       [ h1 [] [ text "Quick Draw" ]
-      , canvas [ id "mycanvas", width 800, height 600, style [("border", "1px solid")] ] []
+      , div [ style canvasDivStyle ]
+        [ colourPalette
+        , canvas [ id "mycanvas", style canvasStyle ] []
+        ]
       ]
     ]
