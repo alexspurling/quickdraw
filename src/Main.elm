@@ -21,21 +21,20 @@ type alias Model =
 init : (Model, Cmd Msg)
 init = (
   { mousePos = {x = 0, y = 0}
-  , mouseDown = False
-  },
-  loadCanvas ())
+  , mouseDown = False }
+  , loadCanvas ())
 
 -- UPDATE
 
-type Msg = CanvasMouseMoved Position
+type Msg = CanvasMouseMoved MouseMovedEvent
   | CanvasMouseDown
   | CanvasMouseUp
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    CanvasMouseMoved position ->
-      ({ model | mousePos = position }, Cmd.none)
+    CanvasMouseMoved event ->
+      ({ model | mousePos = event.mousePos, mouseDown = event.mouseDown }, Cmd.none)
     CanvasMouseDown ->
       ({ model | mouseDown = True }, Cmd.none)
     CanvasMouseUp ->

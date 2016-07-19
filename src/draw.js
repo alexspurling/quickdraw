@@ -10,7 +10,9 @@ app.ports.loadCanvas.subscribe(function(foo) {
   canvas.addEventListener("mousemove", function (e) {
       var canvasX = e.clientX - canvas.offsetLeft;
       var canvasY = e.clientY - canvas.offsetTop;
-      app.ports.canvasMouseMoved.send({x: canvasX, y: canvasY});
+      var mousePos = {x: canvasX, y: canvasY}
+      var mouseDown = e.buttons == 1
+      app.ports.canvasMouseMoved.send({mousePos: mousePos, mouseDown: mouseDown});
   }, false);
 
   canvas.addEventListener("mousedown", function (e) {
