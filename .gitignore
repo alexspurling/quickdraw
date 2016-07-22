@@ -2,3 +2,4 @@ elm-stuff/
 build/
 .idea/
 *.iml
+.publish/
