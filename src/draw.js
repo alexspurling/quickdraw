@@ -25,7 +25,20 @@ app.ports.loadCanvas.subscribe(function() {
       var mouseDown = e.buttons == 1;
       app.ports.canvasMouseMoved.send({mousePos: mousePos, mouseDown: mouseDown});
       //Might need this to prevent dragging on mobile
-      e.preventDefault();
+//      e.preventDefault();
+  }, false);
+
+  canvas.addEventListener("touchstart", function (e) {
+      //Toggle the mouse down state to off because we want to
+      //set this current position as the starting
+      //point for our line when we start the 'move' event
+      app.ports.canvasMouseMoved.send({mousePos: getMousePos(canvas, e), mouseDown: false});
+  }, false);
+
+  canvas.addEventListener("touchmove", function (e) {
+      app.ports.canvasMouseMoved.send({mousePos: getMousePos(canvas, e), mouseDown: true});
+      //Might need this to prevent dragging on mobile
+//      e.preventDefault();
   }, false);
 
   canvas.addEventListener("mousedown", function (e) {
@@ -45,6 +58,13 @@ function resizeCanvas(canvas) {
   var canvasLeft = canvas.offsetParent.offsetLeft;
   canvas.width = window.innerWidth - canvasLeft - 10;
   canvas.height = window.innerHeight - canvasTop - 10;
+}
+
+function getMousePos(canvas, touchEvent) {
+  var rect = canvas.getBoundingClientRect();
+  var canvasX = parseInt(touchEvent.touches[0].clientX - rect.left);
+  var canvasY = parseInt(touchEvent.touches[0].clientY - rect.top);
+  return {x: canvasX, y: canvasY};
 }
 
 app.ports.drawLine.subscribe(function(line) {
