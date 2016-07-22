@@ -51,16 +51,14 @@ function resizeCanvas(canvas) {
   //Get the position of the containing div
   var canvasTop = canvas.offsetParent.offsetTop;
   var canvasLeft = canvas.offsetParent.offsetLeft;
-  var newWidth = window.innerWidth - canvasLeft - 10;
-  var newHeight = window.innerHeight - canvasTop - 10;
+  var newWidth = window.innerWidth - canvasLeft;
+  var newHeight = window.innerHeight - canvasTop;
   // create a temporary canvas obj to cache the pixel data //
   var temp_cnvs = document.createElement('canvas');
   var temp_cntx = temp_cnvs.getContext('2d');
   // set it to the new width & height and draw the current canvas data into it //
   temp_cnvs.width = newWidth;
   temp_cnvs.height = newHeight;
-//temp_cntx.fillStyle = _background;  // the original canvas's background color
-//temp_cntx.fillRect(0, 0, w, h);
   temp_cntx.drawImage(canvas, 0, 0);
   // resize & clear the original canvas and copy back in the cached pixel data //
   canvas.width = newWidth;

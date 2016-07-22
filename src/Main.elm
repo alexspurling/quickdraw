@@ -66,13 +66,6 @@ subscriptions model =
 
 -- VIEW
 
-mainDivStyle =
-  [
-  ("woidth", "800px")
-  , ("padding", "0")
-  , ("margin", "auto")
-  , ("display", "block") ]
-
 canvasDivStyle =
   [ ("position", "relative" ) ]
 
@@ -98,17 +91,11 @@ colourPalette =
     (List.indexedMap colourPicker Colours.allColours)
 
 canvasStyle =
-  [ ("border", "1px solid")
-  , ("cursor", "pointer") ]
+  [ ("cursor", "pointer") ]
 
 view : Model -> Html Msg
 view model =
-  div []
-    [ div [ style mainDivStyle ]
-      [ h1 [] [ text "Quick Draw" ]
-      , div [ style canvasDivStyle ]
-        [ colourPalette
-        , canvas [ id "mycanvas", style canvasStyle ] []
-        ]
-      ]
+  div [ ]
+    [ colourPalette
+    , canvas [ id "mycanvas", style canvasStyle ] []
     ]
