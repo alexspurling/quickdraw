@@ -1,0 +1,41 @@
+<html>
+<head>
+    <style type="text/css">
+
+    html,body
+    {
+        height:100%;
+        width:100%;
+        margin: 0;
+    }
+    body
+    {
+        display:table;
+    }
+    div
+    {
+        width: 100%;
+        background: yellow;
+        display:table-row;
+    }
+    div+ div
+    {
+        background: pink;
+        height:100%;
+        border: 1px solid;
+    }
+
+    </style>
+</head>
+</html>
+<body>
+<div>
+    <h1>
+        Foo
+    </h1>
+    <h1>
+        Bar
+    </h1>
+</div>
+<div>there</div>
+</body>
