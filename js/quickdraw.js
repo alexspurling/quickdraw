@@ -6391,6 +6391,7 @@ var _alexspurling$quickdraw$Canvas$drawLine = _elm_lang$core$Native_Platform.out
 			colour: v.colour
 		};
 	});
+var _alexspurling$quickdraw$Canvas$canvasZoom = _elm_lang$core$Native_Platform.incomingPort('canvasZoom', _elm_lang$core$Json_Decode$int);
 var _alexspurling$quickdraw$Canvas$MouseMovedEvent = F2(
 	function (a, b) {
 		return {mousePos: a, mouseDown: b};
@@ -11241,42 +11242,81 @@ var _elm_lang$html$Html_App$beginnerProgram = function (_p1) {
 };
 var _elm_lang$html$Html_App$map = _elm_lang$virtual_dom$VirtualDom$map;
 
-var _alexspurling$quickdraw$Main$canvasStyle = _elm_lang$core$Native_List.fromArray(
+var _alexspurling$quickdraw$Main$canvasDivStyle = _elm_lang$core$Native_List.fromArray(
 	[
-		{ctor: '_Tuple2', _0: 'cursor', _1: 'pointer'}
+		{ctor: '_Tuple2', _0: 'position', _1: 'relative'}
+	]);
+var _alexspurling$quickdraw$Main$stopUserSelect = _elm_lang$core$Native_List.fromArray(
+	[
+		{ctor: '_Tuple2', _0: '-webkit-touch-callout', _1: 'none'},
+		{ctor: '_Tuple2', _0: '-webkit-user-select', _1: 'none'},
+		{ctor: '_Tuple2', _0: '-khtml-user-select', _1: 'none'},
+		{ctor: '_Tuple2', _0: '-moz-user-select', _1: 'none'},
+		{ctor: '_Tuple2', _0: '-ms-user-select', _1: 'none'},
+		{ctor: '_Tuple2', _0: 'user-select', _1: 'none'}
 	]);
 var _alexspurling$quickdraw$Main$colourStyle = F2(
 	function (index, colour) {
 		var top = 20 + (((index / 10) | 0) * 30);
 		var left = 20 + (A2(_elm_lang$core$Basics_ops['%'], index, 10) * 30);
-		return _elm_lang$core$Native_List.fromArray(
-			[
-				{ctor: '_Tuple2', _0: 'width', _1: '25px'},
-				{ctor: '_Tuple2', _0: 'height', _1: '25px'},
-				{ctor: '_Tuple2', _0: 'background-color', _1: colour},
-				{ctor: '_Tuple2', _0: 'position', _1: 'absolute'},
-				{
-				ctor: '_Tuple2',
-				_0: 'left',
-				_1: A2(
-					_elm_lang$core$Basics_ops['++'],
-					_elm_lang$core$Basics$toString(left),
-					'px')
-			},
-				{
-				ctor: '_Tuple2',
-				_0: 'top',
-				_1: A2(
-					_elm_lang$core$Basics_ops['++'],
-					_elm_lang$core$Basics$toString(top),
-					'px')
-			}
-			]);
+		return A2(
+			_elm_lang$core$Basics_ops['++'],
+			_elm_lang$core$Native_List.fromArray(
+				[
+					{ctor: '_Tuple2', _0: 'width', _1: '25px'},
+					{ctor: '_Tuple2', _0: 'height', _1: '25px'},
+					{ctor: '_Tuple2', _0: 'background-color', _1: colour},
+					{ctor: '_Tuple2', _0: 'position', _1: 'absolute'},
+					{
+					ctor: '_Tuple2',
+					_0: 'left',
+					_1: A2(
+						_elm_lang$core$Basics_ops['++'],
+						_elm_lang$core$Basics$toString(left),
+						'px')
+				},
+					{
+					ctor: '_Tuple2',
+					_0: 'top',
+					_1: A2(
+						_elm_lang$core$Basics_ops['++'],
+						_elm_lang$core$Basics$toString(top),
+						'px')
+				}
+				]),
+			_alexspurling$quickdraw$Main$stopUserSelect);
 	});
-var _alexspurling$quickdraw$Main$canvasDivStyle = _elm_lang$core$Native_List.fromArray(
-	[
-		{ctor: '_Tuple2', _0: 'position', _1: 'relative'}
-	]);
+var _alexspurling$quickdraw$Main$canvasStyle = A2(
+	_elm_lang$core$Basics_ops['++'],
+	_elm_lang$core$Native_List.fromArray(
+		[
+			{ctor: '_Tuple2', _0: 'cursor', _1: 'pointer'}
+		]),
+	_alexspurling$quickdraw$Main$stopUserSelect);
+var _alexspurling$quickdraw$Main$debugDivStyle = A2(
+	_elm_lang$core$Basics_ops['++'],
+	_elm_lang$core$Native_List.fromArray(
+		[
+			{ctor: '_Tuple2', _0: 'position', _1: 'absolute'},
+			{ctor: '_Tuple2', _0: 'bottom', _1: '50px'}
+		]),
+	_alexspurling$quickdraw$Main$stopUserSelect);
+var _alexspurling$quickdraw$Main$debugDiv = function (model) {
+	return A2(
+		_elm_lang$html$Html$div,
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_elm_lang$html$Html_Attributes$style(_alexspurling$quickdraw$Main$debugDivStyle)
+			]),
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_elm_lang$html$Html$text(
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					'Model: ',
+					_elm_lang$core$Basics$toString(model)))
+			]));
+};
 var _alexspurling$quickdraw$Main$update = F2(
 	function (msg, model) {
 		var _p0 = msg;
@@ -11312,12 +11352,20 @@ var _alexspurling$quickdraw$Main$update = F2(
 						{mouseDown: false}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
-			default:
+			case 'ColourSelected':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
 						{curColour: _p0._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			default:
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{zoom: model.zoom + _p0._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 		}
@@ -11327,15 +11375,19 @@ var _alexspurling$quickdraw$Main$init = {
 	_0: {
 		mousePos: {x: 0, y: 0},
 		mouseDown: false,
-		curColour: _alexspurling$quickdraw$Colours$Black
+		curColour: _alexspurling$quickdraw$Colours$Black,
+		zoom: 0
 	},
 	_1: _alexspurling$quickdraw$Canvas$loadCanvas(
 		{ctor: '_Tuple0'})
 };
-var _alexspurling$quickdraw$Main$Model = F3(
-	function (a, b, c) {
-		return {mousePos: a, mouseDown: b, curColour: c};
+var _alexspurling$quickdraw$Main$Model = F4(
+	function (a, b, c, d) {
+		return {mousePos: a, mouseDown: b, curColour: c, zoom: d};
 	});
+var _alexspurling$quickdraw$Main$Zoom = function (a) {
+	return {ctor: 'Zoom', _0: a};
+};
 var _alexspurling$quickdraw$Main$ColourSelected = function (a) {
 	return {ctor: 'ColourSelected', _0: a};
 };
@@ -11377,7 +11429,8 @@ var _alexspurling$quickdraw$Main$view = function (model) {
 						_elm_lang$html$Html_Attributes$style(_alexspurling$quickdraw$Main$canvasStyle)
 					]),
 				_elm_lang$core$Native_List.fromArray(
-					[]))
+					[])),
+				_alexspurling$quickdraw$Main$debugDiv(model)
 			]));
 };
 var _alexspurling$quickdraw$Main$CanvasMouseUp = {ctor: 'CanvasMouseUp'};
@@ -11397,7 +11450,8 @@ var _alexspurling$quickdraw$Main$subscriptions = function (model) {
 				_alexspurling$quickdraw$Canvas$canvasMouseUp(
 				function (_p3) {
 					return _alexspurling$quickdraw$Main$CanvasMouseUp;
-				})
+				}),
+				_alexspurling$quickdraw$Canvas$canvasZoom(_alexspurling$quickdraw$Main$Zoom)
 			]));
 };
 var _alexspurling$quickdraw$Main$main = {
@@ -11442,11 +11496,22 @@ for (var publicModule in Elm)
 
 var app = Elm.Main.fullscreen();
 
+var buffer;
+var bufferCtx;
 var canvas;
 var ctx;
+var scale = 1;
 
 app.ports.loadCanvas.subscribe(function() {
   canvas = document.getElementById("mycanvas");
+  ctx = canvas.getContext("2d");
+
+  buffer = document.createElement('canvas');
+  buffer.width = 10000;
+  buffer.height = 10000;
+  bufferCtx = buffer.getContext('2d');
+  bufferCtx.lineWidth = 10;
+  bufferCtx.lineCap = 'round';
 
   resizeCanvas(canvas);
   //Resize on window resize
@@ -11479,13 +11544,17 @@ app.ports.loadCanvas.subscribe(function() {
   }, false);
 
   canvas.addEventListener("mousedown", function (e) {
-      console.log("Mouse down", e);
       app.ports.canvasMouseDown.send({});
   }, false);
 
   canvas.addEventListener("mouseup", function (e) {
-      console.log("Mouse up", e);
       app.ports.canvasMouseUp.send({});
+      storeToBuffer();
+  }, false);
+
+  canvas.addEventListener("wheel", function (e) {
+      app.ports.canvasZoom.send(e.deltaY);
+      zoomCanvas(canvas, e);
   }, false);
 });
 
@@ -11493,22 +11562,12 @@ function resizeCanvas(canvas) {
   //Get the position of the containing div
   var canvasTop = canvas.offsetParent.offsetTop;
   var canvasLeft = canvas.offsetParent.offsetLeft;
-  var newWidth = window.innerWidth - canvasLeft;
-  var newHeight = window.innerHeight - canvasTop;
-  // create a temporary canvas obj to cache the pixel data //
-  var temp_cnvs = document.createElement('canvas');
-  var temp_cntx = temp_cnvs.getContext('2d');
-  // set it to the new width & height and draw the current canvas data into it //
-  temp_cnvs.width = newWidth;
-  temp_cnvs.height = newHeight;
-  temp_cntx.drawImage(canvas, 0, 0);
-  // resize & clear the original canvas and copy back in the cached pixel data //
-  canvas.width = newWidth;
-  canvas.height = newHeight;
-  ctx = canvas.getContext("2d");
+  // resize & clear the original canvas and copy back in pixel data from the buffer //
+  canvas.width = window.innerWidth - canvasLeft;
+  canvas.height = window.innerHeight - canvasTop;
   ctx.lineWidth = 10;
   ctx.lineCap = 'round';
-  ctx.drawImage(temp_cnvs, 0, 0);
+  ctx.drawImage(buffer, 0, 0);
 }
 
 function getMousePos(canvas, touchEvent) {
@@ -11526,3 +11585,24 @@ app.ports.drawLine.subscribe(function(line) {
   ctx.stroke();
   ctx.closePath();
 });
+
+function storeToBuffer() {
+  bufferCtx.drawImage(canvas, 0, 0);
+}
+
+function zoomCanvas(canvas, e) {
+  var scaleFactor = Math.pow(2,(e.deltaY / 1000));
+  scale = scale * scaleFactor;
+  console.log("Scale factor", scale);
+
+  //Find the new top and left of the scaled image
+  var scaledWidth = (canvas.width * scale);
+  var scaledHeight = (canvas.height * scale);
+  var diffX = canvas.width - scaledWidth;
+  var diffY = canvas.height - scaledHeight;
+  var newLeft = diffX / 2;
+  var newTop = diffY / 2;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(buffer, newLeft, newTop, scaledWidth, scaledHeight, 0, 0, canvas.width, canvas.height);
+}
