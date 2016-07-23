@@ -5,7 +5,6 @@ var uglify = require('gulp-uglify');
 var rename = require('gulp-rename');
 var elm = require('gulp-elm');
 var concat = require('gulp-concat-util');
-var audiosprite = require('gulp-audiosprite');
 var ghPages = require('gulp-gh-pages');
 var serve = require('gulp-serve');
 
