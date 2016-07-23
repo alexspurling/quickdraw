@@ -18,13 +18,15 @@ main =
 type alias Model =
   { mousePos : Position
   , mouseDown : Bool
-  , curColour : Colour }
+  , curColour : Colour
+  , zoom : Int }
 
 init : (Model, Cmd Msg)
 init = (
   { mousePos = {x = 0, y = 0}
   , mouseDown = False
-  , curColour = Colours.Black }
+  , curColour = Colours.Black
+  , zoom = 0 }
   , loadCanvas ())
 
 -- UPDATE
@@ -33,6 +35,7 @@ type Msg = CanvasMouseMoved MouseMovedEvent
   | CanvasMouseDown
   | CanvasMouseUp
   | ColourSelected Colour
+  | Zoom ZoomAmount
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -52,6 +55,8 @@ update msg model =
       ({ model | mouseDown = False }, Cmd.none)
     ColourSelected colour ->
       ({ model | curColour = colour }, Cmd.none)
+    Zoom zoomAmount ->
+      ({ model | zoom = (model.zoom + zoomAmount) }, Cmd.none)
 
 
 -- SUBSCRIPTIONS
@@ -62,9 +67,18 @@ subscriptions model =
     [ canvasMouseMoved CanvasMouseMoved
     , canvasMouseDown (\_ -> CanvasMouseDown)
     , canvasMouseUp (\_ -> CanvasMouseUp)
+    , canvasZoom Zoom
     ]
 
 -- VIEW
+
+stopUserSelect =
+  [ ("-webkit-touch-callout", "none")
+  , ("-webkit-user-select", "none")
+  , ("-khtml-user-select", "none")
+  , ("-moz-user-select", "none")
+  , ("-ms-user-select", "none")
+  , ("user-select", "none") ]
 
 canvasDivStyle =
   [ ("position", "relative" ) ]
@@ -80,6 +94,7 @@ colourStyle index colour =
     , ("position", "absolute")
     , ("left", (toString left) ++ "px")
     , ("top", (toString top) ++ "px") ]
+      ++ stopUserSelect
 
 colourPicker index colour =
   div
@@ -92,10 +107,19 @@ colourPalette =
 
 canvasStyle =
   [ ("cursor", "pointer") ]
+    ++ stopUserSelect
+
+debugDivStyle =
+  [("position", "absolute"), ("bottom", "50px")]
+    ++ stopUserSelect
+
+debugDiv model =
+  div [ style debugDivStyle ] [ text ("Model: " ++ (toString model)) ]
 
 view : Model -> Html Msg
 view model =
   div [ ]
     [ colourPalette
     , canvas [ id "mycanvas", style canvasStyle ] []
+    , debugDiv model
     ]

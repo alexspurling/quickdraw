@@ -1,10 +1,21 @@
 var app = Elm.Main.fullscreen();
 
+var buffer;
+var bufferCtx;
 var canvas;
 var ctx;
+var scale = 1;
 
 app.ports.loadCanvas.subscribe(function() {
   canvas = document.getElementById("mycanvas");
+  ctx = canvas.getContext("2d");
+
+  buffer = document.createElement('canvas');
+  buffer.width = 10000;
+  buffer.height = 10000;
+  bufferCtx = buffer.getContext('2d');
+  bufferCtx.lineWidth = 10;
+  bufferCtx.lineCap = 'round';
 
   resizeCanvas(canvas);
   //Resize on window resize
@@ -37,13 +48,17 @@ app.ports.loadCanvas.subscribe(function() {
   }, false);
 
   canvas.addEventListener("mousedown", function (e) {
-      console.log("Mouse down", e);
       app.ports.canvasMouseDown.send({});
   }, false);
 
   canvas.addEventListener("mouseup", function (e) {
-      console.log("Mouse up", e);
       app.ports.canvasMouseUp.send({});
+      storeToBuffer();
+  }, false);
+
+  canvas.addEventListener("wheel", function (e) {
+      app.ports.canvasZoom.send(e.deltaY);
+      zoomCanvas(canvas, e);
   }, false);
 });
 
@@ -51,22 +66,12 @@ function resizeCanvas(canvas) {
   //Get the position of the containing div
   var canvasTop = canvas.offsetParent.offsetTop;
   var canvasLeft = canvas.offsetParent.offsetLeft;
-  var newWidth = window.innerWidth - canvasLeft;
-  var newHeight = window.innerHeight - canvasTop;
-  // create a temporary canvas obj to cache the pixel data //
-  var temp_cnvs = document.createElement('canvas');
-  var temp_cntx = temp_cnvs.getContext('2d');
-  // set it to the new width & height and draw the current canvas data into it //
-  temp_cnvs.width = newWidth;
-  temp_cnvs.height = newHeight;
-  temp_cntx.drawImage(canvas, 0, 0);
-  // resize & clear the original canvas and copy back in the cached pixel data //
-  canvas.width = newWidth;
-  canvas.height = newHeight;
-  ctx = canvas.getContext("2d");
+  // resize & clear the original canvas and copy back in pixel data from the buffer //
+  canvas.width = window.innerWidth - canvasLeft;
+  canvas.height = window.innerHeight - canvasTop;
   ctx.lineWidth = 10;
   ctx.lineCap = 'round';
-  ctx.drawImage(temp_cnvs, 0, 0);
+  ctx.drawImage(buffer, 0, 0);
 }
 
 function getMousePos(canvas, touchEvent) {
@@ -84,3 +89,24 @@ app.ports.drawLine.subscribe(function(line) {
   ctx.stroke();
   ctx.closePath();
 });
+
+function storeToBuffer() {
+  bufferCtx.drawImage(canvas, 0, 0);
+}
+
+function zoomCanvas(canvas, e) {
+  var scaleFactor = Math.pow(2,(e.deltaY / 1000));
+  scale = scale * scaleFactor;
+  console.log("Scale factor", scale);
+
+  //Find the new top and left of the scaled image
+  var scaledWidth = (canvas.width * scale);
+  var scaledHeight = (canvas.height * scale);
+  var diffX = canvas.width - scaledWidth;
+  var diffY = canvas.height - scaledHeight;
+  var newLeft = diffX / 2;
+  var newTop = diffY / 2;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(buffer, newLeft, newTop, scaledWidth, scaledHeight, 0, 0, canvas.width, canvas.height);
+}
