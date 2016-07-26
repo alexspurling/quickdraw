@@ -11506,6 +11506,9 @@ var tileSize = 400;
 //Current x,y position on the world
 var curX = 0;
 var curY = 0;
+//Current zoom
+var zoom = 0;
+var scale = 1;
 
 app.ports.loadCanvas.subscribe(function() {
   canvas = document.getElementById("mycanvas");
@@ -11554,17 +11557,17 @@ app.ports.loadCanvas.subscribe(function() {
 
   canvas.addEventListener("wheel", function (e) {
       app.ports.canvasZoom.send(e.deltaY);
-      zoomCanvas(canvas, e);
+      zoomCanvas(e.deltaY);
   }, false);
 
   document.addEventListener("keydown", function (e) {
-      if ("ArrowRight" == e.key) {
+      if (39 == e.keyCode) {
         pan(1,0);
-      } else if ("ArrowLeft" == e.key) {
+      } else if (37 == e.keyCode) {
         pan(-1,0);
-      } else if ("ArrowUp" == e.key) {
+      } else if (38 == e.keyCode) {
         pan(0,-1);
-      } else if ("ArrowDown" == e.key) {
+      } else if (40 == e.keyCode) {
         pan(0,1);
       }
   }, false);
@@ -11623,9 +11626,10 @@ function copyFromTileMap(ctx) {
   visibleTiles(function(i, j) {
     var tile = tileMap[i][j];
     //The position on the canvas on which to place the tiles
-    var canvasX = i * tileSize - curX;
-    var canvasY = j * tileSize - curY;
-    ctx.drawImage(tile.canvas, canvasX, canvasY);
+    var canvasX = i * (tileSize / scale) - (curX / scale);
+    var canvasY = j * (tileSize / scale) - (curY / scale);
+    var canvasTileSize = tileSize / scale;
+    ctx.drawImage(tile.canvas, canvasX, canvasY, canvasTileSize, canvasTileSize);
   });
 }
 
@@ -11650,7 +11654,7 @@ function storeToTileMap() {
     tile = tileMap[i][j];
     //The position on the canvas from which we want to make a tile
     var canvasX = i * tileSize - curX;
-    var canvasY = j * tileSize - curX;
+    var canvasY = j * tileSize - curY;
     tile.drawImage(canvas, canvasX, canvasY, tileSize, tileSize, 0, 0, tileSize, tileSize);
   });
 }
@@ -11658,25 +11662,29 @@ function storeToTileMap() {
 function pan(x, y) {
   curX += 10 * x;
   curY += 10 * y;
+  createTiles();
   copyFromTileMap(ctx);
 }
 
 function visibleTiles(func) {
-  var tileLeft = parseInt(curX / tileSize);
-  var tileTop = parseInt(curY / tileSize);
-  var numTilesI = canvas.width / tileSize + 1;
-  var numTilesJ = canvas.height / tileSize + 1;
-  for (var i = tileLeft; i < numTilesI; i++) {
-    for (var j = tileLeft; j < numTilesJ; j++) {
+  var tileLeft = parseInt(curX / tileSize) - 1;
+  var tileTop = parseInt(curY / tileSize) - 1;
+  var numTilesI = scale * canvas.width / tileSize + 2;
+  var numTilesJ = scale * canvas.height / tileSize + 2;
+  for (var i = tileLeft; i < tileLeft + numTilesI; i++) {
+    for (var j = tileTop; j < tileTop + numTilesJ; j++) {
       func(i, j);
     }
   }
 }
 
-function zoomCanvas(canvas, e) {
-//  var scaleFactor = Math.pow(2,(e.deltaY / 1000));
-//  scale = scale * scaleFactor;
-//  console.log("Scale factor", scale);
+function zoomCanvas(deltaY) {
+  zoom += deltaY;
+  scale = Math.pow(2,(zoom / 1000));
+  console.log("Scale factor", scale);
+
+  createTiles();
+  copyFromTileMap(ctx);
 //
 //  //Find the new top and left of the scaled image
 //  var scaledWidth = (canvas.width * scale);
