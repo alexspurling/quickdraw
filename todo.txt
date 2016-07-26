@@ -1,0 +1,9 @@
+- implement zooming in and out
+  + calculate scale factor
+  + adjust number of tiles based on scale factor
+  + adjust rendering from tile map based on scale factor
+  - adjust rendering to tile map based on scale factor
+
++ debug tiles disappearing when scrolling right
++ tile pixels duplicated / lost when drawing / scrolling
++ add 1 tile to left of map, and 1 tile to top of map
