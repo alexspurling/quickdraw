@@ -11365,7 +11365,7 @@ var _alexspurling$quickdraw$Main$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{zoom: model.zoom + _p0._0}),
+						{zoom: _p0._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 		}
@@ -11408,11 +11408,24 @@ var _alexspurling$quickdraw$Main$colourPicker = F2(
 			_elm_lang$core$Native_List.fromArray(
 				[]));
 	});
-var _alexspurling$quickdraw$Main$colourPalette = A2(
-	_elm_lang$html$Html$div,
-	_elm_lang$core$Native_List.fromArray(
-		[]),
-	A2(_elm_lang$core$List$indexedMap, _alexspurling$quickdraw$Main$colourPicker, _alexspurling$quickdraw$Colours$allColours));
+var _alexspurling$quickdraw$Main$colourPalette = function (visible) {
+	var divstyle = visible ? _elm_lang$core$Native_List.fromArray(
+		[
+			{ctor: '_Tuple2', _0: 'opacity', _1: '1'},
+			{ctor: '_Tuple2', _0: 'transition', _1: 'opacity 1s'}
+		]) : _elm_lang$core$Native_List.fromArray(
+		[
+			{ctor: '_Tuple2', _0: 'opacity', _1: '0'},
+			{ctor: '_Tuple2', _0: 'transition', _1: 'opacity 1s'}
+		]);
+	return A2(
+		_elm_lang$html$Html$div,
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_elm_lang$html$Html_Attributes$style(divstyle)
+			]),
+		A2(_elm_lang$core$List$indexedMap, _alexspurling$quickdraw$Main$colourPicker, _alexspurling$quickdraw$Colours$allColours));
+};
 var _alexspurling$quickdraw$Main$view = function (model) {
 	return A2(
 		_elm_lang$html$Html$div,
@@ -11420,7 +11433,8 @@ var _alexspurling$quickdraw$Main$view = function (model) {
 			[]),
 		_elm_lang$core$Native_List.fromArray(
 			[
-				_alexspurling$quickdraw$Main$colourPalette,
+				_alexspurling$quickdraw$Main$colourPalette(
+				_elm_lang$core$Native_Utils.cmp(model.zoom, 500) < 1),
 				A2(
 				_elm_lang$html$Html$canvas,
 				_elm_lang$core$Native_List.fromArray(
@@ -11556,8 +11570,15 @@ app.ports.loadCanvas.subscribe(function() {
   }, false);
 
   canvas.addEventListener("wheel", function (e) {
-      app.ports.canvasZoom.send(e.deltaY);
-      zoomCanvas(e.deltaY);
+      var delta = e.deltaY;
+      //Firefox gives a delta value in number of lines rather than pixels
+      //so unfortunately the scrolling is lower resolution and we must scale
+      //it by 20 (px per line)
+      if (e.deltaMode == 1) {
+          delta *= 20;
+      }
+      zoomCanvas(delta);
+      app.ports.canvasZoom.send(zoom);
   }, false);
 
   document.addEventListener("keydown", function (e) {
@@ -11680,20 +11701,10 @@ function visibleTiles(func) {
 
 function zoomCanvas(deltaY) {
   zoom += deltaY;
+  zoom = Math.min(zoom, 3000);
+  zoom = Math.max(zoom, -1000);
   scale = Math.pow(2,(zoom / 1000));
-  console.log("Scale factor", scale);
 
   createTiles();
   copyFromTileMap(ctx);
-//
-//  //Find the new top and left of the scaled image
-//  var scaledWidth = (canvas.width * scale);
-//  var scaledHeight = (canvas.height * scale);
-//  var diffX = canvas.width - scaledWidth;
-//  var diffY = canvas.height - scaledHeight;
-//  var newLeft = diffX / 2;
-//  var newTop = diffY / 2;
-//
-//  ctx.clearRect(0, 0, canvas.width, canvas.height);
-//  ctx.drawImage(buffer, newLeft, newTop, scaledWidth, scaledHeight, 0, 0, canvas.width, canvas.height);
 }
