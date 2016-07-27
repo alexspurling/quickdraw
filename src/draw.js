@@ -60,8 +60,15 @@ app.ports.loadCanvas.subscribe(function() {
   }, false);
 
   canvas.addEventListener("wheel", function (e) {
-      app.ports.canvasZoom.send(e.deltaY);
-      zoomCanvas(e.deltaY);
+      var delta = e.deltaY;
+      //Firefox gives a delta value in number of lines rather than pixels
+      //so unfortunately the scrolling is lower resolution and we must scale
+      //it by 20 (px per line)
+      if (e.deltaMode == 1) {
+          delta *= 20;
+      }
+      zoomCanvas(delta);
+      app.ports.canvasZoom.send(zoom);
   }, false);
 
   document.addEventListener("keydown", function (e) {
@@ -184,20 +191,10 @@ function visibleTiles(func) {
 
 function zoomCanvas(deltaY) {
   zoom += deltaY;
+  zoom = Math.min(zoom, 3000);
+  zoom = Math.max(zoom, -1000);
   scale = Math.pow(2,(zoom / 1000));
-  console.log("Scale factor", scale);
 
   createTiles();
   copyFromTileMap(ctx);
-//
-//  //Find the new top and left of the scaled image
-//  var scaledWidth = (canvas.width * scale);
-//  var scaledHeight = (canvas.height * scale);
-//  var diffX = canvas.width - scaledWidth;
-//  var diffY = canvas.height - scaledHeight;
-//  var newLeft = diffX / 2;
-//  var newTop = diffY / 2;
-//
-//  ctx.clearRect(0, 0, canvas.width, canvas.height);
-//  ctx.drawImage(buffer, newLeft, newTop, scaledWidth, scaledHeight, 0, 0, canvas.width, canvas.height);
 }

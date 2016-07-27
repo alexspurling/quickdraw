@@ -55,8 +55,8 @@ update msg model =
       ({ model | mouseDown = False }, Cmd.none)
     ColourSelected colour ->
       ({ model | curColour = colour }, Cmd.none)
-    Zoom zoomAmount ->
-      ({ model | zoom = (model.zoom + zoomAmount) }, Cmd.none)
+    Zoom zoom ->
+      ({ model | zoom = zoom }, Cmd.none)
 
 
 -- SUBSCRIPTIONS
@@ -93,7 +93,8 @@ colourStyle index colour =
     , ("background-color", colour)
     , ("position", "absolute")
     , ("left", (toString left) ++ "px")
-    , ("top", (toString top) ++ "px") ]
+    , ("top", (toString top) ++ "px")
+     ]
       ++ stopUserSelect
 
 colourPicker index colour =
@@ -101,9 +102,16 @@ colourPicker index colour =
   [ style (colourStyle index (Colours.toHex colour))
   , onClick (ColourSelected colour) ] []
 
-colourPalette =
-  div [ ]
-    (List.indexedMap colourPicker Colours.allColours)
+colourPalette visible =
+  let
+    divstyle =
+      if visible then
+        [ ("opacity", "1"), ("transition", "opacity 1s") ]
+      else
+        [ ("opacity", "0"), ("transition", "opacity 1s") ]
+  in
+    div [ style divstyle ]
+      (List.indexedMap colourPicker Colours.allColours)
 
 canvasStyle =
   [ ("cursor", "pointer") ]
@@ -119,7 +127,7 @@ debugDiv model =
 view : Model -> Html Msg
 view model =
   div [ ]
-    [ colourPalette
+    [ colourPalette (model.zoom <= 500)
     , canvas [ id "mycanvas", style canvasStyle ] []
     , debugDiv model
     ]
