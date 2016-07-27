@@ -164,9 +164,10 @@ function storeToTileMap() {
   visibleTiles(function(i, j) {
     tile = tileMap[i][j];
     //The position on the canvas from which we want to make a tile
-    var canvasX = i * tileSize - curX;
-    var canvasY = j * tileSize - curY;
-    tile.drawImage(canvas, canvasX, canvasY, tileSize, tileSize, 0, 0, tileSize, tileSize);
+    var scaledTile = (tileSize / scale);
+    var canvasX = i * scaledTile - (curX / scale);
+    var canvasY = j * scaledTile - (curY / scale);
+    tile.drawImage(canvas, canvasX, canvasY, scaledTile, scaledTile, 0, 0, tileSize, tileSize);
   });
 }
 

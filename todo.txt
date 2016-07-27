@@ -2,8 +2,20 @@
   + calculate scale factor
   + adjust number of tiles based on scale factor
   + adjust rendering from tile map based on scale factor
-  - adjust rendering to tile map based on scale factor
+  + adjust rendering to tile map based on scale factor
+  - zoom in to cursor position
+  - zoom out from cursor position
+
+
+- fix "last line segment disappearing" bug
+- allow drawing without moving mouse
+
+- allow erase (white colour?)
+- button to toggle between pan and draw
 
 + debug tiles disappearing when scrolling right
 + tile pixels duplicated / lost when drawing / scrolling
 + add 1 tile to left of map, and 1 tile to top of map
++ fade out the palette when zooming out
++ get zoom/scrolling working better on firefox
++ limit the amount you can zoom out / in
