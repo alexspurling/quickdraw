@@ -14,6 +14,9 @@ var curY = 0;
 var zoom = 0;
 var scale = 1;
 
+var lineStart;
+var lineEnd;
+
 app.ports.loadCanvas.subscribe(function() {
   canvas = document.getElementById("mycanvas");
   ctx = canvas.getContext("2d");
@@ -32,7 +35,12 @@ app.ports.loadCanvas.subscribe(function() {
       var canvasY = e.offsetY;
       var mousePos = {x: canvasX, y: canvasY};
       var mouseDown = e.buttons == 1;
-      app.ports.canvasMouseMoved.send({mousePos: mousePos, mouseDown: mouseDown});
+      if (mouseDown)
+      {
+          lineEnd = {x: canvasX, y: canvasY};
+          drawLine();
+      }
+//      app.ports.canvasMouseMoved.send({mousePos: mousePos, mouseDown: mouseDown});
       //Might need this to prevent dragging on mobile
 //      e.preventDefault();
   }, false);
@@ -51,11 +59,16 @@ app.ports.loadCanvas.subscribe(function() {
   }, false);
 
   canvas.addEventListener("mousedown", function (e) {
-      app.ports.canvasMouseDown.send({});
+      var canvasX = e.offsetX;
+      var canvasY = e.offsetY;
+      lineStart = {x: canvasX, y: canvasY};
   }, false);
 
   canvas.addEventListener("mouseup", function (e) {
-      app.ports.canvasMouseUp.send({});
+      var canvasX = e.offsetX;
+      var canvasY = e.offsetY;
+
+      drawLine();
       storeToTileMap();
   }, false);
 
@@ -103,7 +116,7 @@ function resizeCanvas(canvas) {
   ctx.lineCap = 'round';
 
   //Copy the tile map to the canvas
-  copyFromTileMap(ctx);
+  copyFromTileMap();
 }
 
 function createTiles() {
@@ -132,7 +145,7 @@ function newTile(i, j) {
   return tileCtx;
 }
 
-function copyFromTileMap(ctx) {
+function copyFromTileMap() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   visibleTiles(function(i, j) {
     var tile = tileMap[i][j];
@@ -151,14 +164,82 @@ function getMousePos(canvas, touchEvent) {
   return {x: canvasX, y: canvasY};
 }
 
-app.ports.drawLine.subscribe(function(line) {
+function drawLine() {
+  var str = function(line) { return (line.x + "," + line.y); };
+
+  var q = lineStart;
+  var p = vec(400, 0);
+  var r = minus(lineEnd, lineStart);
+  var s = vec(0, 400);
+  var rs = cross(r, s);
+  var qmp = minus(q, p);
+  var u = cross(qmp, r) / rs;
+  var t = cross(qmp, s) / rs;
+  var intersect = u < 0 && u > -1 && t < 0 && t > -1;
+
+  debug(
+  "q: " + str(q) + "\n" +
+  "p: " + str(p) + "\n" +
+  "r: " + str(r) + "\n" +
+  "s: " + str(s) + "\n" +
+  "rs: " + rs + "\n" +
+  "qmp: " + str(qmp) + "\n" +
+  "u: " + u + "\n" +
+  "t: " + t + "\n" +
+  "intersect: " + intersect + "\n" +
+  ""
+  );
+
+
+  var tileStart = tileAt(lineStart.x, lineStart.y);
+  var tileEnd = tileAt(lineEnd.x, lineEnd.y);
+  var tiles = "tile start: " + tileStart.i + "," + tileStart.j + " tile end: " + tileEnd.i + "," + tileEnd.j;
+
+  //if tileStart and tileEnd match then
+  //  no intersections
+  //
+
+//  debug(coords + "\n" + tiles);
+
+  copyFromTileMap();
   ctx.beginPath();
-  ctx.strokeStyle = line.colour;
-  ctx.moveTo(line.from.x, line.from.y);
-  ctx.lineTo(line.to.x, line.to.y);
+  ctx.strokeStyle = "#000000";
+  ctx.moveTo(lineStart.x, lineStart.y);
+  ctx.lineTo(lineEnd.x, lineEnd.y);
   ctx.stroke();
   ctx.closePath();
-});
+}
+
+function vec(x, y) {
+  return {x:x, y:y};
+}
+
+//Actually the magnitude of 3D cross product
+function cross(v, w) {
+  return v.x * w.y - v.y * w.x;
+}
+
+function minus(v, w) {
+  return {x:(v.x - w.x), y:(v.y - w.y)};
+}
+
+function div(v, d) {
+  return {x:(v.x / d), y:(v.y / d)};
+}
+
+function tileAt(x, y) {
+  return {i: parseInt(x / tileSize),
+  j: parseInt(y / tileSize)};
+}
+
+//app.ports.drawLine.subscribe(function(line) {
+//  ctx.beginPath();
+//  ctx.strokeStyle = line.colour;
+//  ctx.moveTo(line.from.x, line.from.y);
+//  ctx.lineTo(line.to.x, line.to.y);
+//  ctx.stroke();
+//  ctx.closePath();
+//});
 
 function storeToTileMap() {
   visibleTiles(function(i, j) {
@@ -175,7 +256,7 @@ function pan(x, y) {
   curX += 10 * x;
   curY += 10 * y;
   createTiles();
-  copyFromTileMap(ctx);
+  copyFromTileMap();
 }
 
 function visibleTiles(func) {
@@ -197,5 +278,10 @@ function zoomCanvas(deltaY) {
   scale = Math.pow(2,(zoom / 1000));
 
   createTiles();
-  copyFromTileMap(ctx);
+  copyFromTileMap();
+}
+
+function debug(debugStr) {
+  document.getElementById("debug").innerHTML = debugStr;
+  document.getElementById("debug").innerText = debugStr;
 }

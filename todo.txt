@@ -5,6 +5,7 @@
   + adjust rendering to tile map based on scale factor
   - zoom in to cursor position
   - zoom out from cursor position
+  - change size of pencil when zooming 
 
 
 - fix "last line segment disappearing" bug

@@ -122,7 +122,7 @@ debugDivStyle =
     ++ stopUserSelect
 
 debugDiv model =
-  div [ style debugDivStyle ] [ text ("Model: " ++ (toString model)) ]
+  div [ id "debug", style debugDivStyle ] [ text ("Model: " ++ (toString model)) ]
 
 view : Model -> Html Msg
 view model =
