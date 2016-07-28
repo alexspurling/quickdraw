@@ -14,9 +14,6 @@ var curY = 0;
 var zoom = 0;
 var scale = 1;
 
-var lineStart;
-var lineEnd;
-
 app.ports.loadCanvas.subscribe(function() {
   canvas = document.getElementById("mycanvas");
   ctx = canvas.getContext("2d");
@@ -35,12 +32,7 @@ app.ports.loadCanvas.subscribe(function() {
       var canvasY = e.offsetY;
       var mousePos = {x: canvasX, y: canvasY};
       var mouseDown = e.buttons == 1;
-      if (mouseDown)
-      {
-          lineEnd = {x: canvasX, y: canvasY};
-          drawLine();
-      }
-//      app.ports.canvasMouseMoved.send({mousePos: mousePos, mouseDown: mouseDown});
+      app.ports.canvasMouseMoved.send({mousePos: mousePos, mouseDown: mouseDown});
       //Might need this to prevent dragging on mobile
 //      e.preventDefault();
   }, false);
@@ -59,17 +51,9 @@ app.ports.loadCanvas.subscribe(function() {
   }, false);
 
   canvas.addEventListener("mousedown", function (e) {
-      var canvasX = e.offsetX;
-      var canvasY = e.offsetY;
-      lineStart = {x: canvasX, y: canvasY};
   }, false);
 
   canvas.addEventListener("mouseup", function (e) {
-      var canvasX = e.offsetX;
-      var canvasY = e.offsetY;
-
-      drawLine();
-      storeToTileMap();
   }, false);
 
   canvas.addEventListener("wheel", function (e) {
@@ -141,7 +125,7 @@ function newTile(i, j) {
   var tileCtx = tile.getContext('2d');
   tileCtx.lineWidth = 4;
   tileCtx.lineCap = 'round';
-  tileCtx.strokeRect(0,0,tileSize,tileSize);
+//  tileCtx.strokeRect(0,0,tileSize,tileSize);
   return tileCtx;
 }
 
@@ -164,50 +148,42 @@ function getMousePos(canvas, touchEvent) {
   return {x: canvasX, y: canvasY};
 }
 
-function drawLine() {
-  var str = function(line) { return (line.x + "," + line.y); };
+app.ports.drawLine.subscribe(function(line) {
+  var tileStart = tileAt(line.from.x, line.from.y);
+  var tileEnd = tileAt(line.to.x, line.to.y);
 
-  var q = lineStart;
-  var p = vec(400, 0);
-  var r = minus(lineEnd, lineStart);
-  var s = vec(0, 400);
-  var rs = cross(r, s);
-  var qmp = minus(q, p);
-  var u = cross(qmp, r) / rs;
-  var t = cross(qmp, s) / rs;
-  var intersect = u < 0 && u > -1 && t < 0 && t > -1;
+  //Loop through all the tiles that this line might pass through and draw on them
+  //Note that the line might not actually intersect all of the tiles in which
+  //case the line drawn will simply not be visible
 
-  debug(
-  "q: " + str(q) + "\n" +
-  "p: " + str(p) + "\n" +
-  "r: " + str(r) + "\n" +
-  "s: " + str(s) + "\n" +
-  "rs: " + rs + "\n" +
-  "qmp: " + str(qmp) + "\n" +
-  "u: " + u + "\n" +
-  "t: " + t + "\n" +
-  "intersect: " + intersect + "\n" +
-  ""
-  );
+  var allTiles = [];
+  for (var i = tileStart.i; i <= tileEnd.i; i++) {
+    for (var j = tileStart.j; j <= tileEnd.j; j++) {
+       allTiles.push([i, j]);
+       drawLineOnTile(i, j, line.from, line.to, line.colour);
+    }
+  }
 
-
-  var tileStart = tileAt(lineStart.x, lineStart.y);
-  var tileEnd = tileAt(lineEnd.x, lineEnd.y);
-  var tiles = "tile start: " + tileStart.i + "," + tileStart.j + " tile end: " + tileEnd.i + "," + tileEnd.j;
-
-  //if tileStart and tileEnd match then
-  //  no intersections
-  //
-
-//  debug(coords + "\n" + tiles);
+  debug("Tiles drawn on: " + allTiles);
 
   copyFromTileMap();
-  ctx.beginPath();
-  ctx.strokeStyle = "#000000";
-  ctx.moveTo(lineStart.x, lineStart.y);
-  ctx.lineTo(lineEnd.x, lineEnd.y);
-  ctx.stroke();
-  ctx.closePath();
+});
+
+function drawLineOnTile(i, j, lineFrom, lineTo, colour) {
+  var tile = tileMap[i][j];
+
+  var tileLineFromX = lineFrom.x - (i * tileSize / scale) - (curX / scale);
+  var tileLineFromY = lineFrom.y - (j * tileSize / scale) - (curY / scale);
+
+  var tileLineToX = lineTo.x - (i * tileSize / scale) - (curX / scale);
+  var tileLineToY = lineTo.y - (j * tileSize / scale) - (curY / scale);
+
+  tile.beginPath();
+  tile.strokeStyle = colour;
+  tile.moveTo(tileLineFromX, tileLineFromY);
+  tile.lineTo(tileLineToX, tileLineToY);
+  tile.stroke();
+  tile.closePath();
 }
 
 function vec(x, y) {
@@ -221,6 +197,10 @@ function cross(v, w) {
 
 function minus(v, w) {
   return {x:(v.x - w.x), y:(v.y - w.y)};
+}
+
+function plus(v, w) {
+  return {x:(v.x + w.x), y:(v.y + w.y)};
 }
 
 function div(v, d) {

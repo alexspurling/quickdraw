@@ -5,8 +5,12 @@
   + adjust rendering to tile map based on scale factor
   - zoom in to cursor position
   - zoom out from cursor position
-  - change size of pencil when zooming 
+  - change size of pencil when zooming
 
+- draw directly to tile map
+  + draw to the correct tile
+  - fix 'line gaps'
+  - fix line coordinates when zooming
 
 - fix "last line segment disappearing" bug
 - allow drawing without moving mouse
