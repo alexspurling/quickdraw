@@ -156,9 +156,18 @@ app.ports.drawLine.subscribe(function(line) {
   //Note that the line might not actually intersect all of the tiles in which
   //case the line drawn will simply not be visible
 
+  if (tileStart.i != tileEnd.i || tileStart.j != tileEnd.j) {
+    console.log("Crossing tiles", line.from, line.to);
+  }
+
+  var minI = Math.min(tileStart.i, tileEnd.i);
+  var maxI = Math.max(tileStart.i, tileEnd.i);
+  var minJ = Math.min(tileStart.j, tileEnd.j);
+  var maxJ = Math.max(tileStart.j, tileEnd.j);
+
   var allTiles = [];
-  for (var i = tileStart.i; i <= tileEnd.i; i++) {
-    for (var j = tileStart.j; j <= tileEnd.j; j++) {
+  for (var i = minI; i <= maxI; i++) {
+    for (var j = minJ; j <= maxJ; j++) {
        allTiles.push([i, j]);
        drawLineOnTile(i, j, line.from, line.to, line.colour);
     }
@@ -172,9 +181,6 @@ function drawLineOnTile(i, j, lineFrom, lineTo, colour) {
 
   var tileLineFrom = posOnTile(lineFrom, i, j);
   var tileLineTo = posOnTile(lineTo, i, j);
-
-  console.log("tileLineFrom", tileLineFrom);
-  console.log("tileLineTo", tileLineTo);
 
   tile.beginPath();
   tile.strokeStyle = colour;
