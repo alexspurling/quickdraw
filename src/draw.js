@@ -125,7 +125,7 @@ function newTile(i, j) {
   var tileCtx = tile.getContext('2d');
   tileCtx.lineWidth = 4;
   tileCtx.lineCap = 'round';
-//  tileCtx.strokeRect(0,0,tileSize,tileSize);
+  tileCtx.strokeRect(0,0,tileSize,tileSize);
   return tileCtx;
 }
 
@@ -149,8 +149,8 @@ function getMousePos(canvas, touchEvent) {
 }
 
 app.ports.drawLine.subscribe(function(line) {
-  var tileStart = tileAt(line.from.x, line.from.y);
-  var tileEnd = tileAt(line.to.x, line.to.y);
+  var tileStart = tileAt(line.from);
+  var tileEnd = tileAt(line.to);
 
   //Loop through all the tiles that this line might pass through and draw on them
   //Note that the line might not actually intersect all of the tiles in which
@@ -164,24 +164,22 @@ app.ports.drawLine.subscribe(function(line) {
     }
   }
 
-  debug("Tiles drawn on: " + allTiles);
-
   copyFromTileMap();
 });
 
 function drawLineOnTile(i, j, lineFrom, lineTo, colour) {
   var tile = tileMap[i][j];
 
-  var tileLineFromX = lineFrom.x - (i * tileSize / scale) - (curX / scale);
-  var tileLineFromY = lineFrom.y - (j * tileSize / scale) - (curY / scale);
+  var tileLineFrom = posOnTile(lineFrom, i, j);
+  var tileLineTo = posOnTile(lineTo, i, j);
 
-  var tileLineToX = lineTo.x - (i * tileSize / scale) - (curX / scale);
-  var tileLineToY = lineTo.y - (j * tileSize / scale) - (curY / scale);
+  console.log("tileLineFrom", tileLineFrom);
+  console.log("tileLineTo", tileLineTo);
 
   tile.beginPath();
   tile.strokeStyle = colour;
-  tile.moveTo(tileLineFromX, tileLineFromY);
-  tile.lineTo(tileLineToX, tileLineToY);
+  tile.moveTo(tileLineFrom.x, tileLineFrom.y);
+  tile.lineTo(tileLineTo.x, tileLineTo.y);
   tile.stroke();
   tile.closePath();
 }
@@ -207,19 +205,22 @@ function div(v, d) {
   return {x:(v.x / d), y:(v.y / d)};
 }
 
-function tileAt(x, y) {
-  return {i: parseInt(x / tileSize),
-  j: parseInt(y / tileSize)};
+function tileAt(pos) {
+  var scaledCanvasX = pos.x * scale + curX;
+  var scaledCanvasY = pos.y * scale + curY;
+  return {i: parseInt(scaledCanvasX / tileSize), j: parseInt(scaledCanvasY / tileSize)};
 }
 
-//app.ports.drawLine.subscribe(function(line) {
-//  ctx.beginPath();
-//  ctx.strokeStyle = line.colour;
-//  ctx.moveTo(line.from.x, line.from.y);
-//  ctx.lineTo(line.to.x, line.to.y);
-//  ctx.stroke();
-//  ctx.closePath();
-//});
+/* Get the position on a given tile
+ for a given canvasX and canvasY
+ */
+function posOnTile(pos, i, j) {
+  var scaledCanvasX = pos.x * scale + curX;
+  var scaledCanvasY = pos.y * scale + curY;
+  var tileX = scaledCanvasX - tileSize * i;
+  var tileY = scaledCanvasY - tileSize * j;
+  return {x:tileX, y:tileY};
+}
 
 function storeToTileMap() {
   visibleTiles(function(i, j) {
