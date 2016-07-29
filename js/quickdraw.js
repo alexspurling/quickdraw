@@ -11306,6 +11306,7 @@ var _alexspurling$quickdraw$Main$debugDiv = function (model) {
 		_elm_lang$html$Html$div,
 		_elm_lang$core$Native_List.fromArray(
 			[
+				_elm_lang$html$Html_Attributes$id('debug'),
 				_elm_lang$html$Html_Attributes$style(_alexspurling$quickdraw$Main$debugDivStyle)
 			]),
 		_elm_lang$core$Native_List.fromArray(
@@ -11542,6 +11543,7 @@ app.ports.loadCanvas.subscribe(function() {
       var canvasY = e.offsetY;
       var mousePos = {x: canvasX, y: canvasY};
       var mouseDown = e.buttons == 1;
+//      console.log("Tile at", tileAt(mousePos));
       app.ports.canvasMouseMoved.send({mousePos: mousePos, mouseDown: mouseDown});
       //Might need this to prevent dragging on mobile
 //      e.preventDefault();
@@ -11561,12 +11563,9 @@ app.ports.loadCanvas.subscribe(function() {
   }, false);
 
   canvas.addEventListener("mousedown", function (e) {
-      app.ports.canvasMouseDown.send({});
   }, false);
 
   canvas.addEventListener("mouseup", function (e) {
-      app.ports.canvasMouseUp.send({});
-      storeToTileMap();
   }, false);
 
   canvas.addEventListener("wheel", function (e) {
@@ -11613,7 +11612,7 @@ function resizeCanvas(canvas) {
   ctx.lineCap = 'round';
 
   //Copy the tile map to the canvas
-  copyFromTileMap(ctx);
+  copyFromTileMap();
 }
 
 function createTiles() {
@@ -11642,7 +11641,7 @@ function newTile(i, j) {
   return tileCtx;
 }
 
-function copyFromTileMap(ctx) {
+function copyFromTileMap() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   visibleTiles(function(i, j) {
     var tile = tileMap[i][j];
@@ -11662,13 +11661,79 @@ function getMousePos(canvas, touchEvent) {
 }
 
 app.ports.drawLine.subscribe(function(line) {
-  ctx.beginPath();
-  ctx.strokeStyle = line.colour;
-  ctx.moveTo(line.from.x, line.from.y);
-  ctx.lineTo(line.to.x, line.to.y);
-  ctx.stroke();
-  ctx.closePath();
+  var tileStart = tileAt(line.from);
+  var tileEnd = tileAt(line.to);
+
+  //Loop through all the tiles that this line might pass through and draw on them
+  //Note that the line might not actually intersect all of the tiles in which
+  //case the line drawn will simply not be visible
+  var minI = Math.min(tileStart.i, tileEnd.i);
+  var maxI = Math.max(tileStart.i, tileEnd.i);
+  var minJ = Math.min(tileStart.j, tileEnd.j);
+  var maxJ = Math.max(tileStart.j, tileEnd.j);
+
+  var allTiles = [];
+  for (var i = minI; i <= maxI; i++) {
+    for (var j = minJ; j <= maxJ; j++) {
+       allTiles.push([i, j]);
+       drawLineOnTile(i, j, line.from, line.to, line.colour);
+    }
+  }
+
+  copyFromTileMap();
 });
+
+function drawLineOnTile(i, j, lineFrom, lineTo, colour) {
+  var tile = tileMap[i][j];
+
+  var tileLineFrom = posOnTile(lineFrom, i, j);
+  var tileLineTo = posOnTile(lineTo, i, j);
+
+  tile.beginPath();
+  tile.strokeStyle = colour;
+  tile.moveTo(tileLineFrom.x, tileLineFrom.y);
+  tile.lineTo(tileLineTo.x, tileLineTo.y);
+  tile.stroke();
+  tile.closePath();
+}
+
+function vec(x, y) {
+  return {x:x, y:y};
+}
+
+//Actually the magnitude of 3D cross product
+function cross(v, w) {
+  return v.x * w.y - v.y * w.x;
+}
+
+function minus(v, w) {
+  return {x:(v.x - w.x), y:(v.y - w.y)};
+}
+
+function plus(v, w) {
+  return {x:(v.x + w.x), y:(v.y + w.y)};
+}
+
+function div(v, d) {
+  return {x:(v.x / d), y:(v.y / d)};
+}
+
+function tileAt(pos) {
+  var scaledCanvasX = pos.x * scale + curX;
+  var scaledCanvasY = pos.y * scale + curY;
+  return {i: Math.floor(scaledCanvasX / tileSize), j: Math.floor(scaledCanvasY / tileSize)};
+}
+
+/* Get the position on a given tile
+ for a given canvasX and canvasY
+ */
+function posOnTile(pos, i, j) {
+  var scaledCanvasX = pos.x * scale + curX;
+  var scaledCanvasY = pos.y * scale + curY;
+  var tileX = scaledCanvasX - tileSize * i;
+  var tileY = scaledCanvasY - tileSize * j;
+  return {x:tileX, y:tileY};
+}
 
 function storeToTileMap() {
   visibleTiles(function(i, j) {
@@ -11685,14 +11750,16 @@ function pan(x, y) {
   curX += 10 * x;
   curY += 10 * y;
   createTiles();
-  copyFromTileMap(ctx);
+  copyFromTileMap();
 }
 
 function visibleTiles(func) {
-  var tileLeft = parseInt(curX / tileSize) - 1;
-  var tileTop = parseInt(curY / tileSize) - 1;
-  var numTilesI = scale * canvas.width / tileSize + 2;
-  var numTilesJ = scale * canvas.height / tileSize + 2;
+  var tileLeft = Math.floor(curX / tileSize);
+  var tileTop = Math.floor(curY / tileSize);
+  console.log("tileLeft", tileLeft);
+  console.log("tileTop", tileTop);
+  var numTilesI = scale * canvas.width / tileSize + 1;
+  var numTilesJ = scale * canvas.height / tileSize + 1;
   for (var i = tileLeft; i < tileLeft + numTilesI; i++) {
     for (var j = tileTop; j < tileTop + numTilesJ; j++) {
       func(i, j);
@@ -11707,5 +11774,10 @@ function zoomCanvas(deltaY) {
   scale = Math.pow(2,(zoom / 1000));
 
   createTiles();
-  copyFromTileMap(ctx);
+  copyFromTileMap();
+}
+
+function debug(debugStr) {
+  document.getElementById("debug").innerHTML = debugStr;
+  document.getElementById("debug").innerText = debugStr;
 }
