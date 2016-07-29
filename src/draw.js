@@ -32,6 +32,7 @@ app.ports.loadCanvas.subscribe(function() {
       var canvasY = e.offsetY;
       var mousePos = {x: canvasX, y: canvasY};
       var mouseDown = e.buttons == 1;
+//      console.log("Tile at", tileAt(mousePos));
       app.ports.canvasMouseMoved.send({mousePos: mousePos, mouseDown: mouseDown});
       //Might need this to prevent dragging on mobile
 //      e.preventDefault();
@@ -155,11 +156,6 @@ app.ports.drawLine.subscribe(function(line) {
   //Loop through all the tiles that this line might pass through and draw on them
   //Note that the line might not actually intersect all of the tiles in which
   //case the line drawn will simply not be visible
-
-  if (tileStart.i != tileEnd.i || tileStart.j != tileEnd.j) {
-    console.log("Crossing tiles", line.from, line.to);
-  }
-
   var minI = Math.min(tileStart.i, tileEnd.i);
   var maxI = Math.max(tileStart.i, tileEnd.i);
   var minJ = Math.min(tileStart.j, tileEnd.j);
@@ -214,7 +210,7 @@ function div(v, d) {
 function tileAt(pos) {
   var scaledCanvasX = pos.x * scale + curX;
   var scaledCanvasY = pos.y * scale + curY;
-  return {i: parseInt(scaledCanvasX / tileSize), j: parseInt(scaledCanvasY / tileSize)};
+  return {i: Math.floor(scaledCanvasX / tileSize), j: Math.floor(scaledCanvasY / tileSize)};
 }
 
 /* Get the position on a given tile
@@ -247,10 +243,12 @@ function pan(x, y) {
 }
 
 function visibleTiles(func) {
-  var tileLeft = parseInt(curX / tileSize) - 1;
-  var tileTop = parseInt(curY / tileSize) - 1;
-  var numTilesI = scale * canvas.width / tileSize + 2;
-  var numTilesJ = scale * canvas.height / tileSize + 2;
+  var tileLeft = Math.floor(curX / tileSize);
+  var tileTop = Math.floor(curY / tileSize);
+  console.log("tileLeft", tileLeft);
+  console.log("tileTop", tileTop);
+  var numTilesI = scale * canvas.width / tileSize + 1;
+  var numTilesJ = scale * canvas.height / tileSize + 1;
   for (var i = tileLeft; i < tileLeft + numTilesI; i++) {
     for (var j = tileTop; j < tileTop + numTilesJ; j++) {
       func(i, j);
