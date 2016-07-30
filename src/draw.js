@@ -224,17 +224,6 @@ function posOnTile(pos, i, j) {
   return {x:tileX, y:tileY};
 }
 
-function storeToTileMap() {
-  visibleTiles(function(i, j) {
-    tile = tileMap[i][j];
-    //The position on the canvas from which we want to make a tile
-    var scaledTile = (tileSize / scale);
-    var canvasX = i * scaledTile - (curX / scale);
-    var canvasY = j * scaledTile - (curY / scale);
-    tile.drawImage(canvas, canvasX, canvasY, scaledTile, scaledTile, 0, 0, tileSize, tileSize);
-  });
-}
-
 function pan(x, y) {
   curX += 10 * x;
   curY += 10 * y;
@@ -245,8 +234,6 @@ function pan(x, y) {
 function visibleTiles(func) {
   var tileLeft = Math.floor(curX / tileSize);
   var tileTop = Math.floor(curY / tileSize);
-  console.log("tileLeft", tileLeft);
-  console.log("tileTop", tileTop);
   var numTilesI = scale * canvas.width / tileSize + 1;
   var numTilesJ = scale * canvas.height / tileSize + 1;
   for (var i = tileLeft; i < tileLeft + numTilesI; i++) {
@@ -261,6 +248,9 @@ function zoomCanvas(deltaY) {
   zoom = Math.min(zoom, 3000);
   zoom = Math.max(zoom, -1000);
   scale = Math.pow(2,(zoom / 1000));
+
+  curX = -canvas.width * scale / 2;
+  curY = -canvas.height * scale / 2;
 
   createTiles();
   copyFromTileMap();

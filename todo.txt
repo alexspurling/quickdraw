@@ -7,16 +7,13 @@
   - zoom out from cursor position
   - change size of pencil when zooming
 
-- draw directly to tile map
-  + draw to the correct tile
-  - fix 'line gaps'
-  - fix line coordinates when zooming
-
 - fix "last line segment disappearing" bug
 - allow drawing without moving mouse
 
 - allow erase (white colour?)
 - button to toggle between pan and draw
+
+
 
 + debug tiles disappearing when scrolling right
 + tile pixels duplicated / lost when drawing / scrolling
@@ -24,3 +21,8 @@
 + fade out the palette when zooming out
 + get zoom/scrolling working better on firefox
 + limit the amount you can zoom out / in
+
++ draw directly to tile map
+  + draw to the correct tile
+  + fix 'line gaps'
+  + fix line coordinates when zooming
