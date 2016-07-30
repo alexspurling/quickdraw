@@ -133,13 +133,17 @@ function newTile(i, j) {
 function copyFromTileMap() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   visibleTiles(function(i, j) {
-    var tile = tileMap[i][j];
-    //The position on the canvas on which to place the tiles
-    var canvasX = i * (tileSize / scale) - (curX / scale);
-    var canvasY = j * (tileSize / scale) - (curY / scale);
-    var canvasTileSize = tileSize / scale;
-    ctx.drawImage(tile.canvas, canvasX, canvasY, canvasTileSize, canvasTileSize);
+    copyTileToCanvas(i, j);
   });
+}
+
+function copyTileToCanvas(i, j) {
+  var tile = tileMap[i][j];
+  //The position on the canvas on which to place the tiles
+  var canvasX = i * (tileSize / scale) - (curX / scale);
+  var canvasY = j * (tileSize / scale) - (curY / scale);
+  var canvasTileSize = tileSize / scale;
+  ctx.drawImage(tile.canvas, canvasX, canvasY, canvasTileSize, canvasTileSize);
 }
 
 function getMousePos(canvas, touchEvent) {
@@ -166,10 +170,9 @@ app.ports.drawLine.subscribe(function(line) {
     for (var j = minJ; j <= maxJ; j++) {
        allTiles.push([i, j]);
        drawLineOnTile(i, j, line.from, line.to, line.colour);
+       copyTileToCanvas(i, j);
     }
   }
-
-  copyFromTileMap();
 });
 
 function drawLineOnTile(i, j, lineFrom, lineTo, colour) {

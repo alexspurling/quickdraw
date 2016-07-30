@@ -26,3 +26,5 @@
   + draw to the correct tile
   + fix 'line gaps'
   + fix line coordinates when zooming
+
++ only copy from the tile buffer the tiles that were drawn on (this should improve performance)
