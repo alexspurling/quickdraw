@@ -11591,7 +11591,6 @@ app.ports.loadCanvas.subscribe(function() {
       var hammerScale = 1 / ev.scale;
       scale = Math.max(0.5, Math.min(lastPinchScale * hammerScale, 8));
       zoom = Math.log2(scale) * 1000;
-      app.ports.canvasZoom.send(zoom);
 
       //Adjust the current grid position so that the previous
       //point below the mouse stays in the same location
