@@ -13,6 +13,7 @@ var curY = 0;
 //Current zoom
 var zoom = 0;
 var scale = 1;
+var lastPinchScale = 1;
 
 app.ports.loadCanvas.subscribe(function() {
   canvas = document.getElementById("mycanvas");
@@ -30,10 +31,7 @@ app.ports.loadCanvas.subscribe(function() {
   canvas.addEventListener("mousemove", function (e) {
       var mousePos = {x: e.offsetX, y: e.offsetY};
       var mouseDown = e.buttons == 1;
-//      console.log("Tile at", tileAt(mousePos));
       app.ports.canvasMouseMoved.send({mousePos: mousePos, mouseDown: mouseDown});
-      //Might need this to prevent dragging on mobile
-//      e.preventDefault();
   }, false);
 
   canvas.addEventListener("touchstart", function (e) {
@@ -45,9 +43,42 @@ app.ports.loadCanvas.subscribe(function() {
 
   canvas.addEventListener("touchmove", function (e) {
       app.ports.canvasMouseMoved.send({mousePos: getMousePos(canvas, e), mouseDown: true});
-      //Might need this to prevent dragging on mobile
-//      e.preventDefault();
   }, false);
+
+  //Mobile gesture recognition
+  var hammer = new Hammer(canvas);
+  hammer.get('pinch').set({ enable: true });
+  hammer.get('pan').set({ direction: Hammer.DIRECTION_ALL });
+  hammer.on("pan", function(ev) {
+    //TODO implement drag
+  });
+  var pinch = new Hammer.Pinch();
+  hammer.add([pinch]);
+
+  hammer.on("pinch pinchstart pinchend", function(ev) {
+
+      //Get the point on the canvas around which we want to scale
+      //This point should remain fixed as scale changes
+      var scaledCanvasX = (canvas.width / 2) * scale + curX;
+      var scaledCanvasY = (canvas.height / 2) * scale + curY;
+
+      var hammerScale = 1 / ev.scale;
+      scale = Math.max(0.5, Math.min(lastPinchScale * hammerScale, 8));
+      zoom = Math.log2(scale) * 1000;
+
+      //Adjust the current grid position so that the previous
+      //point below the mouse stays in the same location
+      curX = scaledCanvasX - ((canvas.width / 2) * scale);
+      curY = scaledCanvasY - ((canvas.height / 2) * scale);
+
+      if(ev.type == "pinchend"){
+          lastPinchScale = scale;
+          debug("Pinch end scale is " + scale);
+      }
+
+      createTiles();
+      copyFromTileMap();
+  });
 
   canvas.addEventListener("mousedown", function (e) {
   }, false);
@@ -267,6 +298,14 @@ function zoomCanvas(deltaY, mousePos) {
 }
 
 function debug(debugStr) {
-  document.getElementById("debug").innerHTML = debugStr;
-  document.getElementById("debug").innerText = debugStr;
+  var debugDiv = document.getElementById("debug2");
+  if (!debugDiv) {
+    debugDiv = document.createElement("div");
+    debugDiv.id = "debug2";
+    debugDiv.style.position = "absolute";
+    debugDiv.style.bottom = "25px";
+    document.body.appendChild(debugDiv);
+  }
+  debugDiv.innerHTML = debugStr;
+  debugDiv.innerText = debugStr;
 }

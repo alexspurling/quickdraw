@@ -23,7 +23,7 @@ gulp.task('lint', function() {
 });
 
 gulp.task('prepare-js', ['lint', 'elm-make'], function() {
-  return gulp.src(['build/*.js', 'src/*.js'])
+  return gulp.src(['build/*.js', 'lib/*.js', 'src/*.js'])
     .pipe(concat('quickdraw.js'))
     .pipe(gulp.dest('build/dist/js'));
 });
