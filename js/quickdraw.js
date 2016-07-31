@@ -11781,14 +11781,3 @@ function debug(debugStr) {
   document.getElementById("debug").innerHTML = debugStr;
   document.getElementById("debug").innerText = debugStr;
 }
-
-function testZoom() {
-  scale = 1.25;
-  zoom = 322;
-  curX = -120;
-  curY = -140;
-  canvas.width = 800;
-  canvas.height = 600;
-
-  zoomCanvas(644, {x:200, y:300});
-}
