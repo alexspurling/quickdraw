@@ -28,9 +28,7 @@ app.ports.loadCanvas.subscribe(function() {
   console.log("Loading canvas", canvas);
 
   canvas.addEventListener("mousemove", function (e) {
-      var canvasX = e.offsetX;
-      var canvasY = e.offsetY;
-      var mousePos = {x: canvasX, y: canvasY};
+      var mousePos = {x: e.offsetX, y: e.offsetY};
       var mouseDown = e.buttons == 1;
 //      console.log("Tile at", tileAt(mousePos));
       app.ports.canvasMouseMoved.send({mousePos: mousePos, mouseDown: mouseDown});
@@ -65,7 +63,8 @@ app.ports.loadCanvas.subscribe(function() {
       if (e.deltaMode == 1) {
           delta *= 20;
       }
-      zoomCanvas(delta);
+      var mousePos = {x: e.offsetX, y: e.offsetY};
+      zoomCanvas(delta, mousePos);
       app.ports.canvasZoom.send(zoom);
   }, false);
 
@@ -119,7 +118,7 @@ function createTiles() {
 }
 
 function newTile(i, j) {
-  console.log("Creating tile " + i + ", " + j);
+//  console.log("Creating tile " + i + ", " + j);
   var tile = document.createElement('canvas');
   tile.width = tileSize;
   tile.height = tileSize;
@@ -228,8 +227,9 @@ function posOnTile(pos, i, j) {
 }
 
 function pan(x, y) {
-  curX += 10 * x;
-  curY += 10 * y;
+  curX += 20 * x;
+  curY += 20 * y;
+  console.log("CurXY", curX, curY);
   createTiles();
   copyFromTileMap();
 }
@@ -246,14 +246,21 @@ function visibleTiles(func) {
   }
 }
 
-function zoomCanvas(deltaY) {
+function zoomCanvas(deltaY, mousePos) {
+  //Get the point on the canvas around which we want to scale
+  //This point should remain fixed as scale changes
+  var scaledCanvasX = mousePos.x * scale + curX;
+  var scaledCanvasY = mousePos.y * scale + curY;
+
   zoom += deltaY;
   zoom = Math.min(zoom, 3000);
   zoom = Math.max(zoom, -1000);
   scale = Math.pow(2,(zoom / 1000));
 
-  curX = -canvas.width * scale / 2;
-  curY = -canvas.height * scale / 2;
+  //Adjust the current grid position so that the previous
+  //point below the mouse stays in the same location
+  curX = scaledCanvasX - (mousePos.x * scale);
+  curY = scaledCanvasY - (mousePos.y * scale);
 
   createTiles();
   copyFromTileMap();
