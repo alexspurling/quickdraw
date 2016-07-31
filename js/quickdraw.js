@@ -11807,6 +11807,7 @@ function zoomCanvas(deltaY, mousePos) {
   zoom = Math.max(zoom, -1000);
   scale = Math.pow(2,(zoom / 1000));
 
+  debug(scale);
   //Adjust the current grid position so that the previous
   //point below the mouse stays in the same location
   curX = scaledCanvasX - (mousePos.x * scale);
@@ -11817,6 +11818,14 @@ function zoomCanvas(deltaY, mousePos) {
 }
 
 function debug(debugStr) {
-  document.getElementById("debug").innerHTML = debugStr;
-  document.getElementById("debug").innerText = debugStr;
+  var debugDiv = document.getElementById("debug2");
+  if (!debugDiv) {
+    debugDiv = document.createElement("div");
+    debugDiv.id = "debug2";
+    debugDiv.style.position = "absolute";
+    debugDiv.style.bottom = "25px";
+    document.body.appendChild(debugDiv);
+  }
+  debugDiv.innerHTML = debugStr;
+  debugDiv.innerText = debugStr;
 }
