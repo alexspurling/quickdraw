@@ -11582,12 +11582,14 @@ app.ports.loadCanvas.subscribe(function() {
 
       if(ev.type == "pinchstart"){
           lastPinchScale = scale;
+          debug("Pinch start scale is " + scale);
       }
       if(ev.type == "pinchend"){
           lastPinchScale = scale;
+          debug("Pinch end scale is " + scale);
       }
       scale = Math.max(0.5, Math.min(lastPinchScale * (ev.scale), 4));
-      debug(scale);
+//      debug(scale);
       zoom = Math.log2(scale) * 1000;
 
       //Adjust the current grid position so that the previous
