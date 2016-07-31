@@ -11580,14 +11580,6 @@ app.ports.loadCanvas.subscribe(function() {
       var scaledCanvasX = (canvas.width / 2) * scale + curX;
       var scaledCanvasY = (canvas.height / 2) * scale + curY;
 
-      if(ev.type == "pinchstart"){
-          lastPinchScale = scale;
-          debug("Pinch start scale is " + scale);
-      }
-      if(ev.type == "pinchend"){
-          lastPinchScale = scale;
-          debug("Pinch end scale is " + scale);
-      }
       var hammerScale = 1 / ev.scale;
       scale = Math.max(0.5, Math.min(lastPinchScale * hammerScale, 8));
       zoom = Math.log2(scale) * 1000;
@@ -11596,6 +11588,11 @@ app.ports.loadCanvas.subscribe(function() {
       //point below the mouse stays in the same location
       curX = scaledCanvasX - ((canvas.width / 2) * scale);
       curY = scaledCanvasY - ((canvas.height / 2) * scale);
+
+      if(ev.type == "pinchend"){
+          lastPinchScale = scale;
+          debug("Pinch end scale is " + scale);
+      }
 
       createTiles();
       copyFromTileMap();
