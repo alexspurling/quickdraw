@@ -11588,8 +11588,10 @@ app.ports.loadCanvas.subscribe(function() {
           lastPinchScale = scale;
           debug("Pinch end scale is " + scale);
       }
-      scale = Math.max(0.5, Math.min(lastPinchScale * (ev.scale), 4));
+      var hammerScale = 1 / ev.scale;
+      scale = Math.max(0.5, Math.min(lastPinchScale * hammerScale, 8));
       zoom = Math.log2(scale) * 1000;
+      app.ports.canvasZoom.send(zoom);
 
       //Adjust the current grid position so that the previous
       //point below the mouse stays in the same location
@@ -11602,7 +11604,7 @@ app.ports.loadCanvas.subscribe(function() {
 
   hammer.on('pinchend', function (ev) {
       lastPinchScale = scale;
-      debug("Pinch end scale is " + scale);
+      debug("Pinch ended scale is " + scale);
   });
 
   canvas.addEventListener("mousedown", function (e) {
