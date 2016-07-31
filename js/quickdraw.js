@@ -11531,7 +11531,7 @@ var curY = 0;
 //Current zoom
 var zoom = 0;
 var scale = 1;
-var pinchStartScale = 1;
+var lastPinchScale = 1;
 
 app.ports.loadCanvas.subscribe(function() {
   canvas = document.getElementById("mycanvas");
@@ -11586,9 +11586,12 @@ app.ports.loadCanvas.subscribe(function() {
       var scaledCanvasY = (canvas.height / 2) * scale + curY;
 
       if(ev.type == "pinchstart"){
-          pinchStartScale = scale;
+          lastPinchScale = scale;
       }
-      scale = Math.max(0.5, Math.min(pinchStartScale * (ev.scale), 4));
+      if(ev.type == "pinchend"){
+          lastPinchScale = scale;
+      }
+      scale = Math.max(0.5, Math.min(lastPinchScale * (ev.scale), 4));
       zoom = Math.log2(scale) * 1000;
 
       //Adjust the current grid position so that the previous
