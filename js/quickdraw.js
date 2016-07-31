@@ -11573,7 +11573,7 @@ app.ports.loadCanvas.subscribe(function() {
   var pinch = new Hammer.Pinch();
   hammer.add([pinch]);
 
-  hammer.on("pinch", function(ev) {
+  hammer.on("pinch pinchstart pinchend", function(ev) {
 
       //Get the point on the canvas around which we want to scale
       //This point should remain fixed as scale changes
