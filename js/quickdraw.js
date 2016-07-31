@@ -11539,9 +11539,7 @@ app.ports.loadCanvas.subscribe(function() {
   console.log("Loading canvas", canvas);
 
   canvas.addEventListener("mousemove", function (e) {
-      var canvasX = e.offsetX;
-      var canvasY = e.offsetY;
-      var mousePos = {x: canvasX, y: canvasY};
+      var mousePos = {x: e.offsetX, y: e.offsetY};
       var mouseDown = e.buttons == 1;
 //      console.log("Tile at", tileAt(mousePos));
       app.ports.canvasMouseMoved.send({mousePos: mousePos, mouseDown: mouseDown});
@@ -11576,7 +11574,8 @@ app.ports.loadCanvas.subscribe(function() {
       if (e.deltaMode == 1) {
           delta *= 20;
       }
-      zoomCanvas(delta);
+      var mousePos = {x: e.offsetX, y: e.offsetY};
+      zoomCanvas(delta, mousePos);
       app.ports.canvasZoom.send(zoom);
   }, false);
 
@@ -11630,7 +11629,7 @@ function createTiles() {
 }
 
 function newTile(i, j) {
-  console.log("Creating tile " + i + ", " + j);
+//  console.log("Creating tile " + i + ", " + j);
   var tile = document.createElement('canvas');
   tile.width = tileSize;
   tile.height = tileSize;
@@ -11644,13 +11643,17 @@ function newTile(i, j) {
 function copyFromTileMap() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   visibleTiles(function(i, j) {
-    var tile = tileMap[i][j];
-    //The position on the canvas on which to place the tiles
-    var canvasX = i * (tileSize / scale) - (curX / scale);
-    var canvasY = j * (tileSize / scale) - (curY / scale);
-    var canvasTileSize = tileSize / scale;
-    ctx.drawImage(tile.canvas, canvasX, canvasY, canvasTileSize, canvasTileSize);
+    copyTileToCanvas(i, j);
   });
+}
+
+function copyTileToCanvas(i, j) {
+  var tile = tileMap[i][j];
+  //The position on the canvas on which to place the tiles
+  var canvasX = i * (tileSize / scale) - (curX / scale);
+  var canvasY = j * (tileSize / scale) - (curY / scale);
+  var canvasTileSize = tileSize / scale;
+  ctx.drawImage(tile.canvas, canvasX, canvasY, canvasTileSize, canvasTileSize);
 }
 
 function getMousePos(canvas, touchEvent) {
@@ -11677,10 +11680,9 @@ app.ports.drawLine.subscribe(function(line) {
     for (var j = minJ; j <= maxJ; j++) {
        allTiles.push([i, j]);
        drawLineOnTile(i, j, line.from, line.to, line.colour);
+       copyTileToCanvas(i, j);
     }
   }
-
-  copyFromTileMap();
 });
 
 function drawLineOnTile(i, j, lineFrom, lineTo, colour) {
@@ -11735,20 +11737,10 @@ function posOnTile(pos, i, j) {
   return {x:tileX, y:tileY};
 }
 
-function storeToTileMap() {
-  visibleTiles(function(i, j) {
-    tile = tileMap[i][j];
-    //The position on the canvas from which we want to make a tile
-    var scaledTile = (tileSize / scale);
-    var canvasX = i * scaledTile - (curX / scale);
-    var canvasY = j * scaledTile - (curY / scale);
-    tile.drawImage(canvas, canvasX, canvasY, scaledTile, scaledTile, 0, 0, tileSize, tileSize);
-  });
-}
-
 function pan(x, y) {
-  curX += 10 * x;
-  curY += 10 * y;
+  curX += 20 * x;
+  curY += 20 * y;
+  console.log("CurXY", curX, curY);
   createTiles();
   copyFromTileMap();
 }
@@ -11756,8 +11748,6 @@ function pan(x, y) {
 function visibleTiles(func) {
   var tileLeft = Math.floor(curX / tileSize);
   var tileTop = Math.floor(curY / tileSize);
-  console.log("tileLeft", tileLeft);
-  console.log("tileTop", tileTop);
   var numTilesI = scale * canvas.width / tileSize + 1;
   var numTilesJ = scale * canvas.height / tileSize + 1;
   for (var i = tileLeft; i < tileLeft + numTilesI; i++) {
@@ -11767,11 +11757,21 @@ function visibleTiles(func) {
   }
 }
 
-function zoomCanvas(deltaY) {
+function zoomCanvas(deltaY, mousePos) {
+  //Get the point on the canvas around which we want to scale
+  //This point should remain fixed as scale changes
+  var scaledCanvasX = mousePos.x * scale + curX;
+  var scaledCanvasY = mousePos.y * scale + curY;
+
   zoom += deltaY;
   zoom = Math.min(zoom, 3000);
   zoom = Math.max(zoom, -1000);
   scale = Math.pow(2,(zoom / 1000));
+
+  //Adjust the current grid position so that the previous
+  //point below the mouse stays in the same location
+  curX = scaledCanvasX - (mousePos.x * scale);
+  curY = scaledCanvasY - (mousePos.y * scale);
 
   createTiles();
   copyFromTileMap();
@@ -11780,4 +11780,15 @@ function zoomCanvas(deltaY) {
 function debug(debugStr) {
   document.getElementById("debug").innerHTML = debugStr;
   document.getElementById("debug").innerText = debugStr;
+}
+
+function testZoom() {
+  scale = 1.25;
+  zoom = 322;
+  curX = -120;
+  curY = -140;
+  canvas.width = 800;
+  canvas.height = 600;
+
+  zoomCanvas(644, {x:200, y:300});
 }
