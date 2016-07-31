@@ -11600,6 +11600,11 @@ app.ports.loadCanvas.subscribe(function() {
       copyFromTileMap();
   });
 
+  hammer.on('pinchend', function (ev) {
+      lastPinchScale = scale;
+      debug("Pinch end scale is " + scale);
+  });
+
   canvas.addEventListener("mousedown", function (e) {
   }, false);
 
