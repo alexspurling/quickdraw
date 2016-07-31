@@ -11546,39 +11546,29 @@ app.ports.loadCanvas.subscribe(function() {
   };
   console.log("Loading canvas", canvas);
 
-//  canvas.addEventListener("mousemove", function (e) {
-//      var mousePos = {x: e.offsetX, y: e.offsetY};
-//      var mouseDown = e.buttons == 1;
-//      if (mouseDown) {
-//        console.log("mouse move");
-//      }
-////      console.log("Tile at", tileAt(mousePos));
-//      app.ports.canvasMouseMoved.send({mousePos: mousePos, mouseDown: mouseDown});
-//      //Might need this to prevent dragging on mobile
-////      e.preventDefault();
-//  }, false);
+  canvas.addEventListener("mousemove", function (e) {
+      var mousePos = {x: e.offsetX, y: e.offsetY};
+      var mouseDown = e.buttons == 1;
+      app.ports.canvasMouseMoved.send({mousePos: mousePos, mouseDown: mouseDown});
+  }, false);
 
-//  canvas.addEventListener("touchstart", function (e) {
-//      //Toggle the mouse down state to off because we want to
-//      //set this current position as the starting
-//      //point for our line when we start the 'move' event
-//      app.ports.canvasMouseMoved.send({mousePos: getMousePos(canvas, e), mouseDown: false});
-//  }, false);
+  canvas.addEventListener("touchstart", function (e) {
+      //Toggle the mouse down state to off because we want to
+      //set this current position as the starting
+      //point for our line when we start the 'move' event
+      app.ports.canvasMouseMoved.send({mousePos: getMousePos(canvas, e), mouseDown: false});
+  }, false);
 
-//  canvas.addEventListener("touchmove", function (e) {
-//      app.ports.canvasMouseMoved.send({mousePos: getMousePos(canvas, e), mouseDown: true});
-//      //Might need this to prevent dragging on mobile
-////      e.preventDefault();
-//  }, false);
+  canvas.addEventListener("touchmove", function (e) {
+      app.ports.canvasMouseMoved.send({mousePos: getMousePos(canvas, e), mouseDown: true});
+  }, false);
 
   //Mobile gesture recognition
   var hammer = new Hammer(canvas);
   hammer.get('pinch').set({ enable: true });
   hammer.get('pan').set({ direction: Hammer.DIRECTION_ALL });
   hammer.on("pan", function(ev) {
-    var mousePos = {x:ev.pointers[0].clientX, y:ev.pointers[0].clientY};
-    app.ports.canvasMouseMoved.send({mousePos: mousePos, mouseDown: true});
-    console.log("pan");
+    //TODO implement drag
   });
   var pinch = new Hammer.Pinch();
   hammer.add([pinch]);
@@ -11597,6 +11587,7 @@ app.ports.loadCanvas.subscribe(function() {
           lastPinchScale = scale;
       }
       scale = Math.max(0.5, Math.min(lastPinchScale * (ev.scale), 4));
+      debug(scale);
       zoom = Math.log2(scale) * 1000;
 
       //Adjust the current grid position so that the previous
@@ -11606,7 +11597,6 @@ app.ports.loadCanvas.subscribe(function() {
 
       createTiles();
       copyFromTileMap();
-      app.ports.canvasZoom.send(zoom);
   });
 
   canvas.addEventListener("mousedown", function (e) {
