@@ -11589,7 +11589,6 @@ app.ports.loadCanvas.subscribe(function() {
           debug("Pinch end scale is " + scale);
       }
       scale = Math.max(0.5, Math.min(lastPinchScale * (ev.scale), 4));
-//      debug(scale);
       zoom = Math.log2(scale) * 1000;
 
       //Adjust the current grid position so that the previous
@@ -11809,7 +11808,7 @@ function zoomCanvas(deltaY, mousePos) {
   zoom = Math.max(zoom, -1000);
   scale = Math.pow(2,(zoom / 1000));
 
-  debug(scale);
+//  debug(scale);
   //Adjust the current grid position so that the previous
   //point below the mouse stays in the same location
   curX = scaledCanvasX - (mousePos.x * scale);
