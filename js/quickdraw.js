@@ -11531,7 +11531,7 @@ var curY = 0;
 //Current zoom
 var zoom = 0;
 var scale = 1;
-var panStartScale = 1;
+var pinchStartScale = 1;
 
 app.ports.loadCanvas.subscribe(function() {
   canvas = document.getElementById("mycanvas");
@@ -11589,6 +11589,7 @@ app.ports.loadCanvas.subscribe(function() {
           pinchStartScale = scale;
       }
       scale = Math.max(0.5, Math.min(pinchStartScale * (ev.scale), 4));
+      zoom = Math.log2(scale) * 1000;
 
       //Adjust the current grid position so that the previous
       //point below the mouse stays in the same location
@@ -11597,6 +11598,7 @@ app.ports.loadCanvas.subscribe(function() {
 
       createTiles();
       copyFromTileMap();
+      app.ports.canvasZoom.send(zoom);
   });
 
   canvas.addEventListener("mousedown", function (e) {
