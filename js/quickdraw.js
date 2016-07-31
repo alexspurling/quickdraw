@@ -11546,14 +11546,17 @@ app.ports.loadCanvas.subscribe(function() {
   };
   console.log("Loading canvas", canvas);
 
-  canvas.addEventListener("mousemove", function (e) {
-      var mousePos = {x: e.offsetX, y: e.offsetY};
-      var mouseDown = e.buttons == 1;
-//      console.log("Tile at", tileAt(mousePos));
-      app.ports.canvasMouseMoved.send({mousePos: mousePos, mouseDown: mouseDown});
-      //Might need this to prevent dragging on mobile
-//      e.preventDefault();
-  }, false);
+//  canvas.addEventListener("mousemove", function (e) {
+//      var mousePos = {x: e.offsetX, y: e.offsetY};
+//      var mouseDown = e.buttons == 1;
+//      if (mouseDown) {
+//        console.log("mouse move");
+//      }
+////      console.log("Tile at", tileAt(mousePos));
+//      app.ports.canvasMouseMoved.send({mousePos: mousePos, mouseDown: mouseDown});
+//      //Might need this to prevent dragging on mobile
+////      e.preventDefault();
+//  }, false);
 
 //  canvas.addEventListener("touchstart", function (e) {
 //      //Toggle the mouse down state to off because we want to
@@ -11572,8 +11575,10 @@ app.ports.loadCanvas.subscribe(function() {
   var hammer = new Hammer(canvas);
   hammer.get('pinch').set({ enable: true });
   hammer.get('pan').set({ direction: Hammer.DIRECTION_ALL });
-  hammer.on("panleft panright panup pandown", function(ev) {
-//      console.log(ev.type +" gesture detected.");
+  hammer.on("pan", function(ev) {
+    var mousePos = {x:ev.pointers[0].clientX, y:ev.pointers[0].clientY};
+    app.ports.canvasMouseMoved.send({mousePos: mousePos, mouseDown: true});
+    console.log("pan");
   });
   var pinch = new Hammer.Pinch();
   hammer.add([pinch]);
