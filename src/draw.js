@@ -118,17 +118,11 @@ function resizeCanvas(canvas) {
   var canvasWidth = window.innerWidth;
   var canvasHeight = window.innerHeight;
 
-  console.log("Resizing to " + canvasWidth + ", " + canvasHeight);
-
   // resize & clear the original canvas and copy back in pixel data from the buffer //
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
   createTiles();
-
-  //Reset the drawing properties
-  ctx.lineWidth = 10;
-  ctx.lineCap = 'round';
 
   //Copy the tile map to the canvas
   copyFromTileMap();
@@ -155,7 +149,8 @@ function newTile(i, j) {
   tile.height = tileSize;
   var tileCtx = tile.getContext('2d');
   tileCtx.lineWidth = 4;
-  tileCtx.lineCap = 'round';
+  tileCtx.lineCap = 'square';
+  tileCtx.lineJoin = 'round';
   tileCtx.strokeRect(0,0,tileSize,tileSize);
   return tileCtx;
 }
