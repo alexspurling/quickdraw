@@ -173,6 +173,7 @@ function copyTileToCanvas(i, j) {
   var canvasX = i * (tileSize / scale) - (curX / scale);
   var canvasY = j * (tileSize / scale) - (curY / scale);
   var canvasTileSize = tileSize / scale;
+  ctx.clearRect(canvasX, canvasY, (tileSize / scale), (tileSize / scale));
   ctx.drawImage(tile.canvas, canvasX, canvasY, canvasTileSize, canvasTileSize);
 }
 
