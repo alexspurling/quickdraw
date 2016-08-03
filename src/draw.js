@@ -14,6 +14,10 @@ var curY = 0;
 var zoom = 0;
 var scale = 1;
 var lastPinchScale = 1;
+var curMousePos = {x:0, y:0};
+var lastMid = {x:0, y:0};
+var lastLine = {x:0, y:0};
+var drawing = false;
 
 app.ports.loadCanvas.subscribe(function() {
   canvas = document.getElementById("mycanvas");
@@ -30,6 +34,7 @@ app.ports.loadCanvas.subscribe(function() {
 
   canvas.addEventListener("mousemove", function (e) {
       var mousePos = {x: e.offsetX, y: e.offsetY};
+      curMousePos = mousePos;
       var mouseDown = e.buttons == 1;
       app.ports.canvasMouseMoved.send({mousePos: mousePos, mouseDown: mouseDown});
   }, false);
@@ -81,9 +86,14 @@ app.ports.loadCanvas.subscribe(function() {
   });
 
   canvas.addEventListener("mousedown", function (e) {
+      lastMid = curMousePos;
+      lastLine = curMousePos;
+      drawing = true;
+		  if (window.requestAnimationFrame) requestAnimationFrame(draw);
   }, false);
 
   canvas.addEventListener("mouseup", function (e) {
+      drawing = false;
   }, false);
 
   canvas.addEventListener("wheel", function (e) {
@@ -149,14 +159,13 @@ function newTile(i, j) {
   tile.height = tileSize;
   var tileCtx = tile.getContext('2d');
   tileCtx.lineWidth = 4;
-  tileCtx.lineCap = 'square';
+  tileCtx.lineCap = 'round';
   tileCtx.lineJoin = 'round';
   tileCtx.strokeRect(0,0,tileSize,tileSize);
   return tileCtx;
 }
 
 function copyFromTileMap() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
   visibleTiles(function(i, j) {
     copyTileToCanvas(i, j);
   });
@@ -179,39 +188,74 @@ function getMousePos(canvas, touchEvent) {
   return {x: canvasX, y: canvasY};
 }
 
-app.ports.drawLine.subscribe(function(line) {
-  var tileStart = tileAt(line.from);
-  var tileEnd = tileAt(line.to);
+//app.ports.drawLine.subscribe(drawLine);
+
+function draw() {
+  if (drawing) {
+    drawLine({from:lastLine, to:curMousePos});
+		if (window.requestAnimationFrame) requestAnimationFrame(draw);
+  }
+}
+
+function drawLine(line) {
+
+  var lineMid = {x:line.from.x + line.to.x >> 1, y:line.from.y + line.to.y >> 1};
+  //We don't actually need the coordinates of the most recent mouse
+  //position other than to calculate the
+
+  var tileCurveFrom = tileAt(lastMid);
+  var tileCurveMid = tileAt(line.from);
+  var tileCurveTo = tileAt(lineMid); //We draw the curve up to the midpoint of the current line
 
   //Loop through all the tiles that this line might pass through and draw on them
   //Note that the line might not actually intersect all of the tiles in which
   //case the line drawn will simply not be visible
-  var minI = Math.min(tileStart.i, tileEnd.i);
-  var maxI = Math.max(tileStart.i, tileEnd.i);
-  var minJ = Math.min(tileStart.j, tileEnd.j);
-  var maxJ = Math.max(tileStart.j, tileEnd.j);
+  var minI = Math.min(tileCurveFrom.i, tileCurveMid.i, tileCurveTo.i);
+  var maxI = Math.max(tileCurveFrom.i, tileCurveMid.i, tileCurveTo.i);
+  var minJ = Math.min(tileCurveFrom.j, tileCurveMid.j, tileCurveTo.j);
+  var maxJ = Math.max(tileCurveFrom.j, tileCurveMid.j, tileCurveTo.j);
 
-  var allTiles = [];
   for (var i = minI; i <= maxI; i++) {
     for (var j = minJ; j <= maxJ; j++) {
-       allTiles.push([i, j]);
-       drawLineOnTile(i, j, line.from, line.to, line.colour);
+       drawLineOnTile(i, j, lastMid, line.from, lineMid, line.colour);
        copyTileToCanvas(i, j);
     }
   }
-});
+  lastMid = lineMid;
+  lastLine = line.to;
+}
 
-function drawLineOnTile(i, j, lineFrom, lineTo, colour) {
+function drawLineOnTile(i, j, lastMid, lineFrom, lineMid, colour) {
+
   var tile = tileMap[i][j];
 
-  var tileLineFrom = posOnTile(lineFrom, i, j);
-  var tileLineTo = posOnTile(lineTo, i, j);
+  //Instead of doing simple straight lines between points A, B and C, we find the
+  //mid-point between A and B and B and C and draw a quadratic
+  //curve between these two points. This means we never reach as far as the current
+  //mouse position but we get nice smooth curves between mouse positions
+  //Algorithm was taken from: https://github.com/Leimi/drawingboard.js
 
+  var curveFromTilePos = posOnTile(lastMid, i, j);
+  //Note the curve mid is not the same as the line mid see above
+  var curveMidTilePos = posOnTile(lineFrom, i, j);
+  var curveToTilePos = posOnTile(lineMid, i, j);
+
+  tile.strokeStyle = "black";
   tile.beginPath();
-  tile.strokeStyle = colour;
-  tile.moveTo(tileLineFrom.x, tileLineFrom.y);
-  tile.lineTo(tileLineTo.x, tileLineTo.y);
+  tile.moveTo(curveFromTilePos.x, curveFromTilePos.y);
+  tile.quadraticCurveTo(curveMidTilePos.x, curveMidTilePos.y, curveToTilePos.x, curveToTilePos.y);
   tile.stroke();
+
+//  tile.strokeStyle = "red";
+//  tile.beginPath();
+//  tile.moveTo(curveFromTilePos.x, curveFromTilePos.y);
+//  tile.lineTo(curveMidTilePos.x, curveMidTilePos.y);
+//  tile.stroke();
+//  tile.strokeStyle = "blue";
+//  tile.beginPath();
+//  tile.moveTo(curveMidTilePos.x, curveMidTilePos.y);
+//  tile.lineTo(curveToTilePos.x, curveToTilePos.y);
+//  tile.stroke();
   tile.closePath();
 }
 
