@@ -1,7 +1,6 @@
 module Main exposing (..)
 
-import Canvas exposing (..)
-import Colours exposing (Colour)
+import AnimationFrame
 import Collage
 import Element
 import Html exposing (Html, button, div, text, h1, canvas)
@@ -9,6 +8,11 @@ import Html.Attributes exposing (id, height, width, style)
 import Html.Events exposing (onClick)
 import Html.App as App
 import Mouse exposing (Position)
+import Time exposing (Time)
+
+import Canvas exposing (..)
+import Colours exposing (Colour)
+import Pencil
 
 main =
    App.program { init = init, view = view, update = update, subscriptions = subscriptions }
@@ -16,14 +20,14 @@ main =
 -- MODEL
 
 type alias Model =
-  { mousePos : Position
+  { pencil : Pencil.Model
   , mouseDown : Bool
   , curColour : Colour
   , zoom : Int }
 
 init : (Model, Cmd Msg)
 init = (
-  { mousePos = {x = 0, y = 0}
+  { pencil = Pencil.init
   , mouseDown = False
   , curColour = Colours.Black
   , zoom = 0 }
@@ -36,19 +40,16 @@ type Msg = CanvasMouseMoved MouseMovedEvent
   | CanvasMouseUp
   | ColourSelected Colour
   | Zoom ZoomAmount
+  | AnimationFrame Time
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     CanvasMouseMoved event ->
       let
-        line =
-          { from = model.mousePos
-          , to = event.mousePos
-          , colour = (Colours.toHex model.curColour) }
-        drawLineCmd = if event.mouseDown then drawLine line else Cmd.none
+        newPencil = Pencil.update (Pencil.CanvasMouseMoved event) model.pencil
       in
-        ({ model | mousePos = event.mousePos, mouseDown = event.mouseDown }, drawLineCmd)
+        ({ model | pencil = newPencil, mouseDown = event.mouseDown }, Cmd.none)
     CanvasMouseDown ->
       ({ model | mouseDown = True }, Cmd.none)
     CanvasMouseUp ->
@@ -57,6 +58,16 @@ update msg model =
       ({ model | curColour = colour }, Cmd.none)
     Zoom zoom ->
       ({ model | zoom = zoom }, Cmd.none)
+    AnimationFrame delta ->
+      if model.mouseDown then
+        let
+          lineToDraw = (Pencil.getLine model.pencil (Colours.toHex model.curColour))
+          drawLineCmd = drawLine lineToDraw
+          newPencil = Pencil.update (Pencil.UpdatePrevPositions lineToDraw.lineMid) model.pencil
+        in
+          ({model | pencil = newPencil}, drawLineCmd)
+      else
+        (model, Cmd.none)
 
 
 -- SUBSCRIPTIONS
@@ -68,6 +79,7 @@ subscriptions model =
     , canvasMouseDown (\_ -> CanvasMouseDown)
     , canvasMouseUp (\_ -> CanvasMouseUp)
     , canvasZoom Zoom
+    , AnimationFrame.diffs AnimationFrame
     ]
 
 -- VIEW

@@ -7,9 +7,10 @@ type alias MouseMovedEvent =
   , mouseDown: Bool }
 
 type alias Line =
-  { from: Position
-  , to: Position
-  , colour: String }
+  { lastMid : Position
+  , lineFrom : Position
+  , lineMid : Position
+  , colour : String }
 
 type alias ZoomAmount = Int
 

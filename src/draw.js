@@ -14,10 +14,6 @@ var curY = 0;
 var zoom = 0;
 var scale = 1;
 var lastPinchScale = 1;
-var curMousePos = {x:0, y:0};
-var lastMid = {x:0, y:0};
-var lastLine = {x:0, y:0};
-var drawing = false;
 
 app.ports.loadCanvas.subscribe(function() {
   canvas = document.getElementById("mycanvas");
@@ -34,7 +30,6 @@ app.ports.loadCanvas.subscribe(function() {
 
   canvas.addEventListener("mousemove", function (e) {
       var mousePos = {x: e.offsetX, y: e.offsetY};
-      curMousePos = mousePos;
       var mouseDown = e.buttons == 1;
       app.ports.canvasMouseMoved.send({mousePos: mousePos, mouseDown: mouseDown});
   }, false);
@@ -86,14 +81,11 @@ app.ports.loadCanvas.subscribe(function() {
   });
 
   canvas.addEventListener("mousedown", function (e) {
-      lastMid = curMousePos;
-      lastLine = curMousePos;
-      drawing = true;
-		  if (window.requestAnimationFrame) requestAnimationFrame(draw);
+      app.ports.canvasMouseDown.send({});
   }, false);
 
   canvas.addEventListener("mouseup", function (e) {
-      drawing = false;
+      app.ports.canvasMouseUp.send({});
   }, false);
 
   canvas.addEventListener("wheel", function (e) {
@@ -153,15 +145,13 @@ function createTiles() {
 }
 
 function newTile(i, j) {
-//  console.log("Creating tile " + i + ", " + j);
   var tile = document.createElement('canvas');
   tile.width = tileSize;
   tile.height = tileSize;
   var tileCtx = tile.getContext('2d');
-  tileCtx.lineWidth = 4;
+  tileCtx.lineWidth = 10;
   tileCtx.lineCap = 'round';
   tileCtx.lineJoin = 'round';
-  tileCtx.strokeRect(0,0,tileSize,tileSize);
   return tileCtx;
 }
 
@@ -188,24 +178,16 @@ function getMousePos(canvas, touchEvent) {
   return {x: canvasX, y: canvasY};
 }
 
-//app.ports.drawLine.subscribe(drawLine);
-
-function draw() {
-  if (drawing) {
-    drawLine({from:lastLine, to:curMousePos});
-		if (window.requestAnimationFrame) requestAnimationFrame(draw);
-  }
-}
+app.ports.drawLine.subscribe(drawLine);
 
 function drawLine(line) {
 
-  var lineMid = {x:line.from.x + line.to.x >> 1, y:line.from.y + line.to.y >> 1};
   //We don't actually need the coordinates of the most recent mouse
   //position other than to calculate the
 
-  var tileCurveFrom = tileAt(lastMid);
-  var tileCurveMid = tileAt(line.from);
-  var tileCurveTo = tileAt(lineMid); //We draw the curve up to the midpoint of the current line
+  var tileCurveFrom = tileAt(line.lastMid);
+  var tileCurveMid = tileAt(line.lineFrom);
+  var tileCurveTo = tileAt(line.lineMid); //We draw the curve up to the midpoint of the current line
 
   //Loop through all the tiles that this line might pass through and draw on them
   //Note that the line might not actually intersect all of the tiles in which
@@ -217,12 +199,10 @@ function drawLine(line) {
 
   for (var i = minI; i <= maxI; i++) {
     for (var j = minJ; j <= maxJ; j++) {
-       drawLineOnTile(i, j, lastMid, line.from, lineMid, line.colour);
+       drawLineOnTile(i, j, line.lastMid, line.lineFrom, line.lineMid, line.colour);
        copyTileToCanvas(i, j);
     }
   }
-  lastMid = lineMid;
-  lastLine = line.to;
 }
 
 function drawLineOnTile(i, j, lastMid, lineFrom, lineMid, colour) {
@@ -240,22 +220,11 @@ function drawLineOnTile(i, j, lastMid, lineFrom, lineMid, colour) {
   var curveMidTilePos = posOnTile(lineFrom, i, j);
   var curveToTilePos = posOnTile(lineMid, i, j);
 
-  tile.strokeStyle = "black";
+  tile.strokeStyle = colour;
   tile.beginPath();
   tile.moveTo(curveFromTilePos.x, curveFromTilePos.y);
   tile.quadraticCurveTo(curveMidTilePos.x, curveMidTilePos.y, curveToTilePos.x, curveToTilePos.y);
   tile.stroke();
-
-//  tile.strokeStyle = "red";
-//  tile.beginPath();
-//  tile.moveTo(curveFromTilePos.x, curveFromTilePos.y);
-//  tile.lineTo(curveMidTilePos.x, curveMidTilePos.y);
-//  tile.stroke();
-//  tile.strokeStyle = "blue";
-//  tile.beginPath();
-//  tile.moveTo(curveMidTilePos.x, curveMidTilePos.y);
-//  tile.lineTo(curveToTilePos.x, curveToTilePos.y);
-//  tile.stroke();
   tile.closePath();
 }
 
