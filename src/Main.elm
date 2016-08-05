@@ -135,17 +135,6 @@ colourPicker index colour =
     [ style (colourStyle index (Colours.toHex colour))
     , onClick (ColourSelected colour) ] []
 
-colourPalette visible =
-  let
-    divstyle =
-      if visible then
-        [ ("opacity", "1"), ("transition", "opacity 1s") ]
-      else
-        [ ("opacity", "0"), ("transition", "opacity 1s") ]
-  in
-    div [ style divstyle ]
-      ((List.indexedMap colourPicker Colours.allColours))
-
 drawDragStyle =
   [ ("width", "25px")
   , ("height", "25px")
@@ -157,6 +146,18 @@ drawDragStyle =
 drawDrag drawMode =
   div [ style drawDragStyle, onClick ToggleDrawMode ]
     [ img [ src (if drawMode then "drag.svg" else "pencil.svg"), width 25, height 25 ] [] ]
+
+colourPalette visible selectedDrawMode =
+  let
+    divstyle =
+      if visible then
+        [ ("opacity", "1"), ("transition", "opacity 1s") ]
+      else
+        [ ("opacity", "0"), ("transition", "opacity 1s") ]
+  in
+    div [ style divstyle ]
+      ((List.indexedMap colourPicker Colours.allColours) ++
+      [drawDrag selectedDrawMode])
 
 canvasStyle drawMode =
   [ ("cursor", (if drawMode then "crosshair" else "-webkit-grab")) ]
@@ -172,8 +173,7 @@ debugDiv model =
 view : Model -> Html Msg
 view model =
   div [ ]
-    [ colourPalette (model.zoom <= 500)
-    , drawDrag model.drawMode
+    [ colourPalette (model.zoom <= 500) model.selectedDrawMode
     , canvas [ id "mycanvas", style (canvasStyle model.drawMode) ] []
     , debugDiv model
     ]
