@@ -6380,25 +6380,41 @@ var _alexspurling$quickdraw$Canvas$canvasMouseUp = _elm_lang$core$Native_Platfor
 		{}));
 var _alexspurling$quickdraw$Canvas$canvasMouseDown = _elm_lang$core$Native_Platform.incomingPort(
 	'canvasMouseDown',
-	_elm_lang$core$Json_Decode$succeed(
-		{}));
+	A2(
+		_elm_lang$core$Json_Decode$andThen,
+		A2(_elm_lang$core$Json_Decode_ops[':='], 'x', _elm_lang$core$Json_Decode$int),
+		function (x) {
+			return A2(
+				_elm_lang$core$Json_Decode$andThen,
+				A2(_elm_lang$core$Json_Decode_ops[':='], 'y', _elm_lang$core$Json_Decode$int),
+				function (y) {
+					return _elm_lang$core$Json_Decode$succeed(
+						{x: x, y: y});
+				});
+		}));
 var _alexspurling$quickdraw$Canvas$drawLine = _elm_lang$core$Native_Platform.outgoingPort(
 	'drawLine',
 	function (v) {
 		return {
-			from: {x: v.from.x, y: v.from.y},
-			to: {x: v.to.x, y: v.to.y},
+			lastMid: {x: v.lastMid.x, y: v.lastMid.y},
+			lineFrom: {x: v.lineFrom.x, y: v.lineFrom.y},
+			lineMid: {x: v.lineMid.x, y: v.lineMid.y},
 			colour: v.colour
 		};
 	});
 var _alexspurling$quickdraw$Canvas$canvasZoom = _elm_lang$core$Native_Platform.incomingPort('canvasZoom', _elm_lang$core$Json_Decode$int);
+var _alexspurling$quickdraw$Canvas$moveCanvas = _elm_lang$core$Native_Platform.outgoingPort(
+	'moveCanvas',
+	function (v) {
+		return {x: v.x, y: v.y};
+	});
 var _alexspurling$quickdraw$Canvas$MouseMovedEvent = F2(
 	function (a, b) {
 		return {mousePos: a, mouseDown: b};
 	});
-var _alexspurling$quickdraw$Canvas$Line = F3(
-	function (a, b, c) {
-		return {from: a, to: b, colour: c};
+var _alexspurling$quickdraw$Canvas$Line = F4(
+	function (a, b, c, d) {
+		return {lastMid: a, lineFrom: b, lineMid: c, colour: d};
 	});
 
 var _alexspurling$quickdraw$Colours$toHex = function (colour) {
@@ -6468,6 +6484,225 @@ var _alexspurling$quickdraw$Colours$Pink = {ctor: 'Pink'};
 var _alexspurling$quickdraw$Colours$Red = {ctor: 'Red'};
 var _alexspurling$quickdraw$Colours$allColours = _elm_lang$core$Native_List.fromArray(
 	[_alexspurling$quickdraw$Colours$Red, _alexspurling$quickdraw$Colours$Pink, _alexspurling$quickdraw$Colours$Purple, _alexspurling$quickdraw$Colours$DeepPurple, _alexspurling$quickdraw$Colours$Indigo, _alexspurling$quickdraw$Colours$Blue, _alexspurling$quickdraw$Colours$LightBlue, _alexspurling$quickdraw$Colours$Cyan, _alexspurling$quickdraw$Colours$Teal, _alexspurling$quickdraw$Colours$Green, _alexspurling$quickdraw$Colours$LightGreen, _alexspurling$quickdraw$Colours$Lime, _alexspurling$quickdraw$Colours$Yellow, _alexspurling$quickdraw$Colours$Amber, _alexspurling$quickdraw$Colours$Orange, _alexspurling$quickdraw$Colours$DeepOrange, _alexspurling$quickdraw$Colours$Brown, _alexspurling$quickdraw$Colours$Grey, _alexspurling$quickdraw$Colours$BlueGrey, _alexspurling$quickdraw$Colours$Black]);
+
+var _alexspurling$quickdraw$Vector$divide = F2(
+	function (pos, scale) {
+		return {x: (pos.x / scale) | 0, y: (pos.y / scale) | 0};
+	});
+var _alexspurling$quickdraw$Vector$multiply = F2(
+	function (pos, scale) {
+		return {x: pos.x * scale, y: pos.y * scale};
+	});
+var _alexspurling$quickdraw$Vector$minus = F2(
+	function (pos1, pos2) {
+		return {x: pos1.x - pos2.x, y: pos1.y - pos2.y};
+	});
+var _alexspurling$quickdraw$Vector$plus = F2(
+	function (pos1, pos2) {
+		return {x: pos1.x + pos2.x, y: pos1.y + pos2.y};
+	});
+
+var _alexspurling$quickdraw$Drag$dragTo = F2(
+	function (curMousePos, model) {
+		return A2(_alexspurling$quickdraw$Vector$minus, curMousePos, model.dragStart);
+	});
+var _alexspurling$quickdraw$Drag$dragStop = function (model) {
+	return _elm_lang$core$Native_Utils.update(
+		model,
+		{dragging: false});
+};
+var _alexspurling$quickdraw$Drag$dragStart = F2(
+	function (model, mousePos) {
+		return {dragging: true, dragStart: mousePos};
+	});
+var _alexspurling$quickdraw$Drag$init = {
+	dragging: false,
+	dragStart: {x: 0, y: 0}
+};
+var _alexspurling$quickdraw$Drag$Model = F2(
+	function (a, b) {
+		return {dragging: a, dragStart: b};
+	});
+var _alexspurling$quickdraw$Drag$DragStart = function (a) {
+	return {ctor: 'DragStart', _0: a};
+};
+
+var _elm_lang$animation_frame$Native_AnimationFrame = function()
+{
+
+var hasStartTime =
+	window.performance &&
+	window.performance.timing &&
+	window.performance.timing.navigationStart;
+
+var navStart = hasStartTime
+	? window.performance.timing.navigationStart
+	: Date.now();
+
+var rAF = _elm_lang$core$Native_Scheduler.nativeBinding(function(callback)
+{
+	var id = requestAnimationFrame(function(time) {
+		var timeNow = time
+			? (time > navStart ? time : time + navStart)
+			: Date.now();
+
+		callback(_elm_lang$core$Native_Scheduler.succeed(timeNow));
+	});
+
+	return function() {
+		cancelAnimationFrame(id);
+	};
+});
+
+return {
+	rAF: rAF
+};
+
+}();
+
+var _elm_lang$animation_frame$AnimationFrame$rAF = _elm_lang$animation_frame$Native_AnimationFrame.rAF;
+var _elm_lang$animation_frame$AnimationFrame$subscription = _elm_lang$core$Native_Platform.leaf('AnimationFrame');
+var _elm_lang$animation_frame$AnimationFrame$State = F3(
+	function (a, b, c) {
+		return {subs: a, request: b, oldTime: c};
+	});
+var _elm_lang$animation_frame$AnimationFrame$init = _elm_lang$core$Task$succeed(
+	A3(
+		_elm_lang$animation_frame$AnimationFrame$State,
+		_elm_lang$core$Native_List.fromArray(
+			[]),
+		_elm_lang$core$Maybe$Nothing,
+		0));
+var _elm_lang$animation_frame$AnimationFrame$onEffects = F3(
+	function (router, subs, _p0) {
+		var _p1 = _p0;
+		var _p5 = _p1.request;
+		var _p4 = _p1.oldTime;
+		var _p2 = {ctor: '_Tuple2', _0: _p5, _1: subs};
+		if (_p2._0.ctor === 'Nothing') {
+			if (_p2._1.ctor === '[]') {
+				return _elm_lang$core$Task$succeed(
+					A3(
+						_elm_lang$animation_frame$AnimationFrame$State,
+						_elm_lang$core$Native_List.fromArray(
+							[]),
+						_elm_lang$core$Maybe$Nothing,
+						_p4));
+			} else {
+				return A2(
+					_elm_lang$core$Task$andThen,
+					_elm_lang$core$Process$spawn(
+						A2(
+							_elm_lang$core$Task$andThen,
+							_elm_lang$animation_frame$AnimationFrame$rAF,
+							_elm_lang$core$Platform$sendToSelf(router))),
+					function (pid) {
+						return A2(
+							_elm_lang$core$Task$andThen,
+							_elm_lang$core$Time$now,
+							function (time) {
+								return _elm_lang$core$Task$succeed(
+									A3(
+										_elm_lang$animation_frame$AnimationFrame$State,
+										subs,
+										_elm_lang$core$Maybe$Just(pid),
+										time));
+							});
+					});
+			}
+		} else {
+			if (_p2._1.ctor === '[]') {
+				return A2(
+					_elm_lang$core$Task$andThen,
+					_elm_lang$core$Process$kill(_p2._0._0),
+					function (_p3) {
+						return _elm_lang$core$Task$succeed(
+							A3(
+								_elm_lang$animation_frame$AnimationFrame$State,
+								_elm_lang$core$Native_List.fromArray(
+									[]),
+								_elm_lang$core$Maybe$Nothing,
+								_p4));
+					});
+			} else {
+				return _elm_lang$core$Task$succeed(
+					A3(_elm_lang$animation_frame$AnimationFrame$State, subs, _p5, _p4));
+			}
+		}
+	});
+var _elm_lang$animation_frame$AnimationFrame$onSelfMsg = F3(
+	function (router, newTime, _p6) {
+		var _p7 = _p6;
+		var _p10 = _p7.subs;
+		var diff = newTime - _p7.oldTime;
+		var send = function (sub) {
+			var _p8 = sub;
+			if (_p8.ctor === 'Time') {
+				return A2(
+					_elm_lang$core$Platform$sendToApp,
+					router,
+					_p8._0(newTime));
+			} else {
+				return A2(
+					_elm_lang$core$Platform$sendToApp,
+					router,
+					_p8._0(diff));
+			}
+		};
+		return A2(
+			_elm_lang$core$Task$andThen,
+			_elm_lang$core$Process$spawn(
+				A2(
+					_elm_lang$core$Task$andThen,
+					_elm_lang$animation_frame$AnimationFrame$rAF,
+					_elm_lang$core$Platform$sendToSelf(router))),
+			function (pid) {
+				return A2(
+					_elm_lang$core$Task$andThen,
+					_elm_lang$core$Task$sequence(
+						A2(_elm_lang$core$List$map, send, _p10)),
+					function (_p9) {
+						return _elm_lang$core$Task$succeed(
+							A3(
+								_elm_lang$animation_frame$AnimationFrame$State,
+								_p10,
+								_elm_lang$core$Maybe$Just(pid),
+								newTime));
+					});
+			});
+	});
+var _elm_lang$animation_frame$AnimationFrame$Diff = function (a) {
+	return {ctor: 'Diff', _0: a};
+};
+var _elm_lang$animation_frame$AnimationFrame$diffs = function (tagger) {
+	return _elm_lang$animation_frame$AnimationFrame$subscription(
+		_elm_lang$animation_frame$AnimationFrame$Diff(tagger));
+};
+var _elm_lang$animation_frame$AnimationFrame$Time = function (a) {
+	return {ctor: 'Time', _0: a};
+};
+var _elm_lang$animation_frame$AnimationFrame$times = function (tagger) {
+	return _elm_lang$animation_frame$AnimationFrame$subscription(
+		_elm_lang$animation_frame$AnimationFrame$Time(tagger));
+};
+var _elm_lang$animation_frame$AnimationFrame$subMap = F2(
+	function (func, sub) {
+		var _p11 = sub;
+		if (_p11.ctor === 'Time') {
+			return _elm_lang$animation_frame$AnimationFrame$Time(
+				function (_p12) {
+					return func(
+						_p11._0(_p12));
+				});
+		} else {
+			return _elm_lang$animation_frame$AnimationFrame$Diff(
+				function (_p13) {
+					return func(
+						_p11._0(_p13));
+				});
+		}
+	});
+_elm_lang$core$Native_Platform.effectManagers['AnimationFrame'] = {pkg: 'elm-lang/animation-frame', init: _elm_lang$animation_frame$AnimationFrame$init, onEffects: _elm_lang$animation_frame$AnimationFrame$onEffects, onSelfMsg: _elm_lang$animation_frame$AnimationFrame$onSelfMsg, tag: 'sub', subMap: _elm_lang$animation_frame$AnimationFrame$subMap};
 
 var _elm_lang$core$Color$fmod = F2(
 	function (f, n) {
@@ -11242,6 +11477,50 @@ var _elm_lang$html$Html_App$beginnerProgram = function (_p1) {
 };
 var _elm_lang$html$Html_App$map = _elm_lang$virtual_dom$VirtualDom$map;
 
+var _alexspurling$quickdraw$Pencil$calculateMidPosition = F2(
+	function (pos1, pos2) {
+		return A2(
+			_alexspurling$quickdraw$Vector$divide,
+			A2(_alexspurling$quickdraw$Vector$plus, pos1, pos2),
+			2);
+	});
+var _alexspurling$quickdraw$Pencil$getLine = F2(
+	function (model, colour) {
+		var curMid = A2(_alexspurling$quickdraw$Pencil$calculateMidPosition, model.prevMousePos, model.curMousePos);
+		return A4(_alexspurling$quickdraw$Canvas$Line, model.prevMidPoint, model.prevMousePos, curMid, colour);
+	});
+var _alexspurling$quickdraw$Pencil$update = F2(
+	function (msg, model) {
+		var _p0 = msg;
+		if (_p0.ctor === 'CanvasMouseMoved') {
+			var _p1 = _p0._0;
+			return _p1.mouseDown ? _elm_lang$core$Native_Utils.update(
+				model,
+				{curMousePos: _p1.mousePos}) : _elm_lang$core$Native_Utils.update(
+				model,
+				{curMousePos: _p1.mousePos, prevMousePos: _p1.mousePos, prevMidPoint: _p1.mousePos});
+		} else {
+			return _elm_lang$core$Native_Utils.update(
+				model,
+				{prevMousePos: model.curMousePos, prevMidPoint: _p0._0});
+		}
+	});
+var _alexspurling$quickdraw$Pencil$init = {
+	curMousePos: {x: 0, y: 0},
+	prevMousePos: {x: 0, y: 0},
+	prevMidPoint: {x: 0, y: 0}
+};
+var _alexspurling$quickdraw$Pencil$Model = F3(
+	function (a, b, c) {
+		return {curMousePos: a, prevMousePos: b, prevMidPoint: c};
+	});
+var _alexspurling$quickdraw$Pencil$UpdatePrevPositions = function (a) {
+	return {ctor: 'UpdatePrevPositions', _0: a};
+};
+var _alexspurling$quickdraw$Pencil$CanvasMouseMoved = function (a) {
+	return {ctor: 'CanvasMouseMoved', _0: a};
+};
+
 var _alexspurling$quickdraw$Main$canvasDivStyle = _elm_lang$core$Native_List.fromArray(
 	[
 		{ctor: '_Tuple2', _0: 'position', _1: 'relative'}
@@ -11286,13 +11565,31 @@ var _alexspurling$quickdraw$Main$colourStyle = F2(
 				]),
 			_alexspurling$quickdraw$Main$stopUserSelect);
 	});
-var _alexspurling$quickdraw$Main$canvasStyle = A2(
+var _alexspurling$quickdraw$Main$drawDragStyle = A2(
 	_elm_lang$core$Basics_ops['++'],
 	_elm_lang$core$Native_List.fromArray(
 		[
+			{ctor: '_Tuple2', _0: 'width', _1: '25px'},
+			{ctor: '_Tuple2', _0: 'height', _1: '25px'},
+			{ctor: '_Tuple2', _0: 'position', _1: 'absolute'},
+			{ctor: '_Tuple2', _0: 'left', _1: '325px'},
+			{ctor: '_Tuple2', _0: 'top', _1: '50px'},
 			{ctor: '_Tuple2', _0: 'cursor', _1: 'pointer'}
 		]),
 	_alexspurling$quickdraw$Main$stopUserSelect);
+var _alexspurling$quickdraw$Main$canvasStyle = function (drawMode) {
+	return A2(
+		_elm_lang$core$Basics_ops['++'],
+		_elm_lang$core$Native_List.fromArray(
+			[
+				{
+				ctor: '_Tuple2',
+				_0: 'cursor',
+				_1: drawMode ? 'crosshair' : '-webkit-grab'
+			}
+			]),
+		_alexspurling$quickdraw$Main$stopUserSelect);
+};
 var _alexspurling$quickdraw$Main$debugDivStyle = A2(
 	_elm_lang$core$Basics_ops['++'],
 	_elm_lang$core$Native_List.fromArray(
@@ -11324,25 +11621,26 @@ var _alexspurling$quickdraw$Main$update = F2(
 		switch (_p0.ctor) {
 			case 'CanvasMouseMoved':
 				var _p1 = _p0._0;
-				var line = {
-					from: model.mousePos,
-					to: _p1.mousePos,
-					colour: _alexspurling$quickdraw$Colours$toHex(model.curColour)
-				};
-				var drawLineCmd = _p1.mouseDown ? _alexspurling$quickdraw$Canvas$drawLine(line) : _elm_lang$core$Platform_Cmd$none;
+				var newPencil = A2(
+					_alexspurling$quickdraw$Pencil$update,
+					_alexspurling$quickdraw$Pencil$CanvasMouseMoved(_p1),
+					model.pencil);
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{mousePos: _p1.mousePos, mouseDown: _p1.mouseDown}),
-					_1: drawLineCmd
+						{pencil: newPencil, mouseDown: _p1.mouseDown}),
+					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'CanvasMouseDown':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{mouseDown: true}),
+						{
+							mouseDown: true,
+							drag: A2(_alexspurling$quickdraw$Drag$dragStart, model.drag, _p0._0)
+						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'CanvasMouseUp':
@@ -11350,7 +11648,10 @@ var _alexspurling$quickdraw$Main$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{mouseDown: false}),
+						{
+							mouseDown: false,
+							drag: _alexspurling$quickdraw$Drag$dragStop(model.drag)
+						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'ColourSelected':
@@ -11361,31 +11662,94 @@ var _alexspurling$quickdraw$Main$update = F2(
 						{curColour: _p0._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
-			default:
+			case 'Zoom':
+				var _p2 = _p0._0;
+				var drawMode = model.selectedDrawMode && (_elm_lang$core$Native_Utils.cmp(_p2, 500) < 1);
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{zoom: _p0._0}),
+						{zoom: _p2, drawMode: drawMode}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
+			case 'ToggleDrawMode':
+				var selectedDrawMode = _elm_lang$core$Basics$not(model.selectedDrawMode);
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{drawMode: selectedDrawMode, selectedDrawMode: selectedDrawMode}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			default:
+				if (model.mouseDown) {
+					if (_elm_lang$core$Basics$not(model.drawMode) && model.drag.dragging) {
+						return {
+							ctor: '_Tuple2',
+							_0: model,
+							_1: _alexspurling$quickdraw$Canvas$moveCanvas(
+								A2(_alexspurling$quickdraw$Drag$dragTo, model.pencil.curMousePos, model.drag))
+						};
+					} else {
+						var lineToDraw = A2(
+							_alexspurling$quickdraw$Pencil$getLine,
+							model.pencil,
+							_alexspurling$quickdraw$Colours$toHex(model.curColour));
+						var drawLineCmd = _alexspurling$quickdraw$Canvas$drawLine(lineToDraw);
+						var newPencil = A2(
+							_alexspurling$quickdraw$Pencil$update,
+							_alexspurling$quickdraw$Pencil$UpdatePrevPositions(lineToDraw.lineMid),
+							model.pencil);
+						return {
+							ctor: '_Tuple2',
+							_0: _elm_lang$core$Native_Utils.update(
+								model,
+								{pencil: newPencil}),
+							_1: drawLineCmd
+						};
+					}
+				} else {
+					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+				}
 		}
 	});
 var _alexspurling$quickdraw$Main$init = {
 	ctor: '_Tuple2',
-	_0: {
-		mousePos: {x: 0, y: 0},
-		mouseDown: false,
-		curColour: _alexspurling$quickdraw$Colours$Black,
-		zoom: 0
-	},
+	_0: {pencil: _alexspurling$quickdraw$Pencil$init, mouseDown: false, curColour: _alexspurling$quickdraw$Colours$Black, zoom: 0, drawMode: true, selectedDrawMode: true, drag: _alexspurling$quickdraw$Drag$init},
 	_1: _alexspurling$quickdraw$Canvas$loadCanvas(
 		{ctor: '_Tuple0'})
 };
-var _alexspurling$quickdraw$Main$Model = F4(
-	function (a, b, c, d) {
-		return {mousePos: a, mouseDown: b, curColour: c, zoom: d};
+var _alexspurling$quickdraw$Main$Model = F7(
+	function (a, b, c, d, e, f, g) {
+		return {pencil: a, mouseDown: b, curColour: c, zoom: d, drawMode: e, selectedDrawMode: f, drag: g};
 	});
+var _alexspurling$quickdraw$Main$ToggleDrawMode = {ctor: 'ToggleDrawMode'};
+var _alexspurling$quickdraw$Main$drawDrag = function (drawMode) {
+	return A2(
+		_elm_lang$html$Html$div,
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_elm_lang$html$Html_Attributes$style(_alexspurling$quickdraw$Main$drawDragStyle),
+				_elm_lang$html$Html_Events$onClick(_alexspurling$quickdraw$Main$ToggleDrawMode)
+			]),
+		_elm_lang$core$Native_List.fromArray(
+			[
+				A2(
+				_elm_lang$html$Html$img,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html_Attributes$src(
+						drawMode ? 'drag.svg' : 'pencil.svg'),
+						_elm_lang$html$Html_Attributes$width(25),
+						_elm_lang$html$Html_Attributes$height(25)
+					]),
+				_elm_lang$core$Native_List.fromArray(
+					[]))
+			]));
+};
+var _alexspurling$quickdraw$Main$AnimationFrame = function (a) {
+	return {ctor: 'AnimationFrame', _0: a};
+};
 var _alexspurling$quickdraw$Main$Zoom = function (a) {
 	return {ctor: 'Zoom', _0: a};
 };
@@ -11436,12 +11800,14 @@ var _alexspurling$quickdraw$Main$view = function (model) {
 			[
 				_alexspurling$quickdraw$Main$colourPalette(
 				_elm_lang$core$Native_Utils.cmp(model.zoom, 500) < 1),
+				_alexspurling$quickdraw$Main$drawDrag(model.drawMode),
 				A2(
 				_elm_lang$html$Html$canvas,
 				_elm_lang$core$Native_List.fromArray(
 					[
 						_elm_lang$html$Html_Attributes$id('mycanvas'),
-						_elm_lang$html$Html_Attributes$style(_alexspurling$quickdraw$Main$canvasStyle)
+						_elm_lang$html$Html_Attributes$style(
+						_alexspurling$quickdraw$Main$canvasStyle(model.drawMode))
 					]),
 				_elm_lang$core$Native_List.fromArray(
 					[])),
@@ -11449,7 +11815,9 @@ var _alexspurling$quickdraw$Main$view = function (model) {
 			]));
 };
 var _alexspurling$quickdraw$Main$CanvasMouseUp = {ctor: 'CanvasMouseUp'};
-var _alexspurling$quickdraw$Main$CanvasMouseDown = {ctor: 'CanvasMouseDown'};
+var _alexspurling$quickdraw$Main$CanvasMouseDown = function (a) {
+	return {ctor: 'CanvasMouseDown', _0: a};
+};
 var _alexspurling$quickdraw$Main$CanvasMouseMoved = function (a) {
 	return {ctor: 'CanvasMouseMoved', _0: a};
 };
@@ -11458,15 +11826,13 @@ var _alexspurling$quickdraw$Main$subscriptions = function (model) {
 		_elm_lang$core$Native_List.fromArray(
 			[
 				_alexspurling$quickdraw$Canvas$canvasMouseMoved(_alexspurling$quickdraw$Main$CanvasMouseMoved),
-				_alexspurling$quickdraw$Canvas$canvasMouseDown(
-				function (_p2) {
-					return _alexspurling$quickdraw$Main$CanvasMouseDown;
-				}),
+				_alexspurling$quickdraw$Canvas$canvasMouseDown(_alexspurling$quickdraw$Main$CanvasMouseDown),
 				_alexspurling$quickdraw$Canvas$canvasMouseUp(
 				function (_p3) {
 					return _alexspurling$quickdraw$Main$CanvasMouseUp;
 				}),
-				_alexspurling$quickdraw$Canvas$canvasZoom(_alexspurling$quickdraw$Main$Zoom)
+				_alexspurling$quickdraw$Canvas$canvasZoom(_alexspurling$quickdraw$Main$Zoom),
+				_elm_lang$animation_frame$AnimationFrame$diffs(_alexspurling$quickdraw$Main$AnimationFrame)
 			]));
 };
 var _alexspurling$quickdraw$Main$main = {
@@ -11532,10 +11898,7 @@ var curY = 0;
 var zoom = 0;
 var scale = 1;
 var lastPinchScale = 1;
-var curMousePos = {x:0, y:0};
-var lastMid = {x:0, y:0};
-var lastLine = {x:0, y:0};
-var drawing = false;
+var gridPosDragStart;
 
 app.ports.loadCanvas.subscribe(function() {
   canvas = document.getElementById("mycanvas");
@@ -11552,7 +11915,6 @@ app.ports.loadCanvas.subscribe(function() {
 
   canvas.addEventListener("mousemove", function (e) {
       var mousePos = {x: e.offsetX, y: e.offsetY};
-      curMousePos = mousePos;
       var mouseDown = e.buttons == 1;
       app.ports.canvasMouseMoved.send({mousePos: mousePos, mouseDown: mouseDown});
   }, false);
@@ -11604,14 +11966,13 @@ app.ports.loadCanvas.subscribe(function() {
   });
 
   canvas.addEventListener("mousedown", function (e) {
-      lastMid = curMousePos;
-      lastLine = curMousePos;
-      drawing = true;
-		  if (window.requestAnimationFrame) requestAnimationFrame(draw);
+      var mousePos = {x: e.offsetX, y: e.offsetY};
+      gridPosDragStart = {x: curX, y: curY};
+      app.ports.canvasMouseDown.send(mousePos);
   }, false);
 
   canvas.addEventListener("mouseup", function (e) {
-      drawing = false;
+      app.ports.canvasMouseUp.send({});
   }, false);
 
   canvas.addEventListener("wheel", function (e) {
@@ -11671,20 +12032,19 @@ function createTiles() {
 }
 
 function newTile(i, j) {
-//  console.log("Creating tile " + i + ", " + j);
   var tile = document.createElement('canvas');
   tile.width = tileSize;
   tile.height = tileSize;
   var tileCtx = tile.getContext('2d');
-  tileCtx.lineWidth = 4;
   tileCtx.lineCap = 'round';
   tileCtx.lineJoin = 'round';
-  tileCtx.strokeRect(0,0,tileSize,tileSize);
+  tileCtx.lineWidth = 3;
+//  tileCtx.strokeRect(0,0,tileSize,tileSize);
+  tileCtx.lineWidth = 10;
   return tileCtx;
 }
 
 function copyFromTileMap() {
-//  ctx.clearRect(0, 0, canvas.width, canvas.height);
   visibleTiles(function(i, j) {
     copyTileToCanvas(i, j);
   });
@@ -11707,24 +12067,16 @@ function getMousePos(canvas, touchEvent) {
   return {x: canvasX, y: canvasY};
 }
 
-//app.ports.drawLine.subscribe(drawLine);
-
-function draw() {
-  if (drawing) {
-    drawLine({from:lastLine, to:curMousePos});
-		if (window.requestAnimationFrame) requestAnimationFrame(draw);
-  }
-}
+app.ports.drawLine.subscribe(drawLine);
 
 function drawLine(line) {
 
-  var lineMid = {x:line.from.x + line.to.x >> 1, y:line.from.y + line.to.y >> 1};
   //We don't actually need the coordinates of the most recent mouse
   //position other than to calculate the
 
-  var tileCurveFrom = tileAt(lastMid);
-  var tileCurveMid = tileAt(line.from);
-  var tileCurveTo = tileAt(lineMid); //We draw the curve up to the midpoint of the current line
+  var tileCurveFrom = tileAt(line.lastMid);
+  var tileCurveMid = tileAt(line.lineFrom);
+  var tileCurveTo = tileAt(line.lineMid); //We draw the curve up to the midpoint of the current line
 
   //Loop through all the tiles that this line might pass through and draw on them
   //Note that the line might not actually intersect all of the tiles in which
@@ -11736,12 +12088,10 @@ function drawLine(line) {
 
   for (var i = minI; i <= maxI; i++) {
     for (var j = minJ; j <= maxJ; j++) {
-       drawLineOnTile(i, j, lastMid, line.from, lineMid, line.colour);
+       drawLineOnTile(i, j, line.lastMid, line.lineFrom, line.lineMid, line.colour);
        copyTileToCanvas(i, j);
     }
   }
-  lastMid = lineMid;
-  lastLine = line.to;
 }
 
 function drawLineOnTile(i, j, lastMid, lineFrom, lineMid, colour) {
@@ -11759,22 +12109,11 @@ function drawLineOnTile(i, j, lastMid, lineFrom, lineMid, colour) {
   var curveMidTilePos = posOnTile(lineFrom, i, j);
   var curveToTilePos = posOnTile(lineMid, i, j);
 
-  tile.strokeStyle = "black";
+  tile.strokeStyle = colour;
   tile.beginPath();
   tile.moveTo(curveFromTilePos.x, curveFromTilePos.y);
   tile.quadraticCurveTo(curveMidTilePos.x, curveMidTilePos.y, curveToTilePos.x, curveToTilePos.y);
   tile.stroke();
-
-//  tile.strokeStyle = "red";
-//  tile.beginPath();
-//  tile.moveTo(curveFromTilePos.x, curveFromTilePos.y);
-//  tile.lineTo(curveMidTilePos.x, curveMidTilePos.y);
-//  tile.stroke();
-//  tile.strokeStyle = "blue";
-//  tile.beginPath();
-//  tile.moveTo(curveMidTilePos.x, curveMidTilePos.y);
-//  tile.lineTo(curveToTilePos.x, curveToTilePos.y);
-//  tile.stroke();
   tile.closePath();
 }
 
@@ -11793,6 +12132,10 @@ function minus(v, w) {
 
 function plus(v, w) {
   return {x:(v.x + w.x), y:(v.y + w.y)};
+}
+
+function multiply(v, s) {
+  return {x:(v.x * s), y:(v.y * s)};
 }
 
 function div(v, d) {
@@ -11844,7 +12187,7 @@ function zoomCanvas(deltaY, mousePos) {
 
   zoom += deltaY;
   zoom = Math.min(zoom, 3000);
-  zoom = Math.max(zoom, -1000);
+  zoom = Math.max(zoom, 0);
   scale = Math.pow(2,(zoom / 1000));
 
   //Adjust the current grid position so that the previous
@@ -11867,6 +12210,17 @@ function debug(debugStr) {
   }
   debugDiv.innerHTML = debugStr;
   debugDiv.innerText = debugStr;
+}
+
+app.ports.moveCanvas.subscribe(moveCanvas);
+
+function moveCanvas(dragVec) {
+  var scaledDragVec = multiply(dragVec, scale);
+  var curPos = minus(gridPosDragStart, scaledDragVec);
+  curX = curPos.x;
+  curY = curPos.y;
+  createTiles();
+  copyFromTileMap();
 }
 
 function drawTest() {
