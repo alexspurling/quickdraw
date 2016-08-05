@@ -11773,24 +11773,31 @@ var _alexspurling$quickdraw$Main$colourPicker = F2(
 			_elm_lang$core$Native_List.fromArray(
 				[]));
 	});
-var _alexspurling$quickdraw$Main$colourPalette = function (visible) {
-	var divstyle = visible ? _elm_lang$core$Native_List.fromArray(
-		[
-			{ctor: '_Tuple2', _0: 'opacity', _1: '1'},
-			{ctor: '_Tuple2', _0: 'transition', _1: 'opacity 1s'}
-		]) : _elm_lang$core$Native_List.fromArray(
-		[
-			{ctor: '_Tuple2', _0: 'opacity', _1: '0'},
-			{ctor: '_Tuple2', _0: 'transition', _1: 'opacity 1s'}
-		]);
-	return A2(
-		_elm_lang$html$Html$div,
-		_elm_lang$core$Native_List.fromArray(
+var _alexspurling$quickdraw$Main$colourPalette = F2(
+	function (visible, selectedDrawMode) {
+		var divstyle = visible ? _elm_lang$core$Native_List.fromArray(
 			[
-				_elm_lang$html$Html_Attributes$style(divstyle)
-			]),
-		A2(_elm_lang$core$List$indexedMap, _alexspurling$quickdraw$Main$colourPicker, _alexspurling$quickdraw$Colours$allColours));
-};
+				{ctor: '_Tuple2', _0: 'opacity', _1: '1'},
+				{ctor: '_Tuple2', _0: 'transition', _1: 'opacity 1s'}
+			]) : _elm_lang$core$Native_List.fromArray(
+			[
+				{ctor: '_Tuple2', _0: 'opacity', _1: '0'},
+				{ctor: '_Tuple2', _0: 'transition', _1: 'opacity 1s'}
+			]);
+		return A2(
+			_elm_lang$html$Html$div,
+			_elm_lang$core$Native_List.fromArray(
+				[
+					_elm_lang$html$Html_Attributes$style(divstyle)
+				]),
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				A2(_elm_lang$core$List$indexedMap, _alexspurling$quickdraw$Main$colourPicker, _alexspurling$quickdraw$Colours$allColours),
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_alexspurling$quickdraw$Main$drawDrag(selectedDrawMode)
+					])));
+	});
 var _alexspurling$quickdraw$Main$view = function (model) {
 	return A2(
 		_elm_lang$html$Html$div,
@@ -11798,9 +11805,10 @@ var _alexspurling$quickdraw$Main$view = function (model) {
 			[]),
 		_elm_lang$core$Native_List.fromArray(
 			[
-				_alexspurling$quickdraw$Main$colourPalette(
-				_elm_lang$core$Native_Utils.cmp(model.zoom, 500) < 1),
-				_alexspurling$quickdraw$Main$drawDrag(model.drawMode),
+				A2(
+				_alexspurling$quickdraw$Main$colourPalette,
+				_elm_lang$core$Native_Utils.cmp(model.zoom, 500) < 1,
+				model.selectedDrawMode),
 				A2(
 				_elm_lang$html$Html$canvas,
 				_elm_lang$core$Native_List.fromArray(
