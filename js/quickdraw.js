@@ -6485,6 +6485,9 @@ var _alexspurling$quickdraw$Colours$Red = {ctor: 'Red'};
 var _alexspurling$quickdraw$Colours$allColours = _elm_lang$core$Native_List.fromArray(
 	[_alexspurling$quickdraw$Colours$Red, _alexspurling$quickdraw$Colours$Pink, _alexspurling$quickdraw$Colours$Purple, _alexspurling$quickdraw$Colours$DeepPurple, _alexspurling$quickdraw$Colours$Indigo, _alexspurling$quickdraw$Colours$Blue, _alexspurling$quickdraw$Colours$LightBlue, _alexspurling$quickdraw$Colours$Cyan, _alexspurling$quickdraw$Colours$Teal, _alexspurling$quickdraw$Colours$Green, _alexspurling$quickdraw$Colours$LightGreen, _alexspurling$quickdraw$Colours$Lime, _alexspurling$quickdraw$Colours$Yellow, _alexspurling$quickdraw$Colours$Amber, _alexspurling$quickdraw$Colours$Orange, _alexspurling$quickdraw$Colours$DeepOrange, _alexspurling$quickdraw$Colours$Brown, _alexspurling$quickdraw$Colours$Grey, _alexspurling$quickdraw$Colours$BlueGrey, _alexspurling$quickdraw$Colours$Black]);
 
+var _alexspurling$quickdraw$Vector$zero = function (pos) {
+	return _elm_lang$core$Native_Utils.eq(pos.x, 0) && _elm_lang$core$Native_Utils.eq(pos.y, 0);
+};
 var _alexspurling$quickdraw$Vector$divide = F2(
 	function (pos, scale) {
 		return {x: (pos.x / scale) | 0, y: (pos.y / scale) | 0};
@@ -12225,10 +12228,16 @@ app.ports.moveCanvas.subscribe(moveCanvas);
 function moveCanvas(dragVec) {
   var scaledDragVec = multiply(dragVec, scale);
   var curPos = minus(gridPosDragStart, scaledDragVec);
-  curX = curPos.x;
-  curY = curPos.y;
-  createTiles();
-  copyFromTileMap();
+  if (curPos.x != curX || curPos.y != curY) {
+    curX = curPos.x;
+    curY = curPos.y;
+    createTiles();
+    copyFromTileMap();
+  }
+  else
+  {
+    console.log("Paused");
+  }
 }
 
 function drawTest() {
