@@ -17,3 +17,7 @@ multiply pos scale =
 divide : Position -> Int -> Position
 divide pos scale =
   {x = pos.x // scale, y = pos.y // scale}
+
+zero : Position -> Bool
+zero pos =
+  pos.x == 0 && pos.y == 0

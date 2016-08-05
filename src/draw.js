@@ -333,8 +333,10 @@ app.ports.moveCanvas.subscribe(moveCanvas);
 function moveCanvas(dragVec) {
   var scaledDragVec = multiply(dragVec, scale);
   var curPos = minus(gridPosDragStart, scaledDragVec);
-  curX = curPos.x;
-  curY = curPos.y;
-  createTiles();
-  copyFromTileMap();
+  if (curPos.x != curX || curPos.y != curY) {
+    curX = curPos.x;
+    curY = curPos.y;
+    createTiles();
+    copyFromTileMap();
+  }
 }
