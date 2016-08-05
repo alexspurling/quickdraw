@@ -12234,10 +12234,6 @@ function moveCanvas(dragVec) {
     createTiles();
     copyFromTileMap();
   }
-  else
-  {
-    console.log("Paused");
-  }
 }
 
 function drawTest() {
