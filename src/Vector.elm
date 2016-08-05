@@ -8,7 +8,7 @@ plus pos1 pos2 =
 
 minus : Position -> Position -> Position
 minus pos1 pos2 =
-  {x = pos1.x + pos2.x, y = pos1.y + pos2.y}
+  {x = pos1.x - pos2.x, y = pos1.y - pos2.y}
 
 multiply : Position -> Int -> Position
 multiply pos scale =

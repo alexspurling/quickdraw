@@ -20,8 +20,10 @@ port canvasMouseMoved : (MouseMovedEvent -> msg) -> Sub msg
 
 port canvasMouseUp : ({} -> msg) -> Sub msg
 
-port canvasMouseDown : ({} -> msg) -> Sub msg
+port canvasMouseDown : (Position -> msg) -> Sub msg
 
 port drawLine : (Line) -> Cmd msg
 
 port canvasZoom : (ZoomAmount -> msg) -> Sub msg
+
+port moveCanvas : Position -> Cmd msg

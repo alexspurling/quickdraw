@@ -14,6 +14,7 @@ var curY = 0;
 var zoom = 0;
 var scale = 1;
 var lastPinchScale = 1;
+var gridPosDragStart;
 
 app.ports.loadCanvas.subscribe(function() {
   canvas = document.getElementById("mycanvas");
@@ -81,7 +82,9 @@ app.ports.loadCanvas.subscribe(function() {
   });
 
   canvas.addEventListener("mousedown", function (e) {
-      app.ports.canvasMouseDown.send({});
+      var mousePos = {x: e.offsetX, y: e.offsetY};
+      gridPosDragStart = {x: curX, y: curY};
+      app.ports.canvasMouseDown.send(mousePos);
   }, false);
 
   canvas.addEventListener("mouseup", function (e) {
@@ -149,9 +152,11 @@ function newTile(i, j) {
   tile.width = tileSize;
   tile.height = tileSize;
   var tileCtx = tile.getContext('2d');
-  tileCtx.lineWidth = 10;
   tileCtx.lineCap = 'round';
   tileCtx.lineJoin = 'round';
+  tileCtx.lineWidth = 3;
+//  tileCtx.strokeRect(0,0,tileSize,tileSize);
+  tileCtx.lineWidth = 10;
   return tileCtx;
 }
 
@@ -245,6 +250,10 @@ function plus(v, w) {
   return {x:(v.x + w.x), y:(v.y + w.y)};
 }
 
+function multiply(v, s) {
+  return {x:(v.x * s), y:(v.y * s)};
+}
+
 function div(v, d) {
   return {x:(v.x / d), y:(v.y / d)};
 }
@@ -294,7 +303,7 @@ function zoomCanvas(deltaY, mousePos) {
 
   zoom += deltaY;
   zoom = Math.min(zoom, 3000);
-  zoom = Math.max(zoom, -1000);
+  zoom = Math.max(zoom, 0);
   scale = Math.pow(2,(zoom / 1000));
 
   //Adjust the current grid position so that the previous
@@ -317,4 +326,15 @@ function debug(debugStr) {
   }
   debugDiv.innerHTML = debugStr;
   debugDiv.innerText = debugStr;
+}
+
+app.ports.moveCanvas.subscribe(moveCanvas);
+
+function moveCanvas(dragVec) {
+  var scaledDragVec = multiply(dragVec, scale);
+  var curPos = minus(gridPosDragStart, scaledDragVec);
+  curX = curPos.x;
+  curY = curPos.y;
+  createTiles();
+  copyFromTileMap();
 }

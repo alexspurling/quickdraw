@@ -3,17 +3,16 @@
   + adjust number of tiles based on scale factor
   + adjust rendering from tile map based on scale factor
   + adjust rendering to tile map based on scale factor
-  - zoom in to cursor position
-  - zoom out from cursor position
-  - change size of pencil when zooming
+  + zoom in to cursor position
+  + zoom out from cursor position
+  + change size of pencil when zooming
 
-- fix "last line segment disappearing" bug
 - allow drawing without moving mouse
 
 - allow erase (white colour?)
 - button to toggle between pan and draw
 
-
+-
 
 + debug tiles disappearing when scrolling right
 + tile pixels duplicated / lost when drawing / scrolling
@@ -28,3 +27,5 @@
   + fix line coordinates when zooming
 
 + only copy from the tile buffer the tiles that were drawn on (this should improve performance)
+
++ fix "last line segment disappearing" bug

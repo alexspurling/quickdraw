@@ -3,8 +3,8 @@ module Main exposing (..)
 import AnimationFrame
 import Collage
 import Element
-import Html exposing (Html, button, div, text, h1, canvas)
-import Html.Attributes exposing (id, height, width, style)
+import Html exposing (Html, button, div, text, h1, canvas, img)
+import Html.Attributes exposing (id, height, width, style, src)
 import Html.Events exposing (onClick)
 import Html.App as App
 import Mouse exposing (Position)
@@ -12,6 +12,7 @@ import Time exposing (Time)
 
 import Canvas exposing (..)
 import Colours exposing (Colour)
+import Drag
 import Pencil
 
 main =
@@ -23,24 +24,32 @@ type alias Model =
   { pencil : Pencil.Model
   , mouseDown : Bool
   , curColour : Colour
-  , zoom : Int }
+  , zoom : Int
+  , drawMode : Bool
+  , selectedDrawMode : Bool
+  , drag : Drag.Model
+  }
 
 init : (Model, Cmd Msg)
 init = (
   { pencil = Pencil.init
   , mouseDown = False
   , curColour = Colours.Black
-  , zoom = 0 }
+  , zoom = 0
+  , drawMode = True
+  , selectedDrawMode = True
+  , drag = Drag.init }
   , loadCanvas ())
 
 -- UPDATE
 
 type Msg = CanvasMouseMoved MouseMovedEvent
-  | CanvasMouseDown
+  | CanvasMouseDown Position
   | CanvasMouseUp
   | ColourSelected Colour
   | Zoom ZoomAmount
   | AnimationFrame Time
+  | ToggleDrawMode
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -50,22 +59,34 @@ update msg model =
         newPencil = Pencil.update (Pencil.CanvasMouseMoved event) model.pencil
       in
         ({ model | pencil = newPencil, mouseDown = event.mouseDown }, Cmd.none)
-    CanvasMouseDown ->
-      ({ model | mouseDown = True }, Cmd.none)
+    CanvasMouseDown mousePos ->
+      ({ model | mouseDown = True, drag = Drag.dragStart model.drag mousePos }, Cmd.none)
     CanvasMouseUp ->
-      ({ model | mouseDown = False }, Cmd.none)
+      ({ model | mouseDown = False, drag = Drag.dragStop model.drag }, Cmd.none)
     ColourSelected colour ->
       ({ model | curColour = colour }, Cmd.none)
     Zoom zoom ->
-      ({ model | zoom = zoom }, Cmd.none)
+      let
+        drawMode = model.selectedDrawMode && (zoom <= 500)
+      in
+        ({ model | zoom = zoom, drawMode = drawMode }, Cmd.none)
+    ToggleDrawMode ->
+      let
+        selectedDrawMode = not model.selectedDrawMode
+      in
+        ({ model | drawMode = selectedDrawMode, selectedDrawMode = selectedDrawMode }, Cmd.none)
     AnimationFrame delta ->
       if model.mouseDown then
-        let
-          lineToDraw = (Pencil.getLine model.pencil (Colours.toHex model.curColour))
-          drawLineCmd = drawLine lineToDraw
-          newPencil = Pencil.update (Pencil.UpdatePrevPositions lineToDraw.lineMid) model.pencil
-        in
-          ({model | pencil = newPencil}, drawLineCmd)
+        if (not model.drawMode) && model.drag.dragging then
+          --Adjust cur pos
+          (model, moveCanvas (Drag.dragTo model.pencil.curMousePos model.drag))
+        else
+          let
+            lineToDraw = (Pencil.getLine model.pencil (Colours.toHex model.curColour))
+            drawLineCmd = drawLine lineToDraw
+            newPencil = Pencil.update (Pencil.UpdatePrevPositions lineToDraw.lineMid) model.pencil
+          in
+            ({ model | pencil = newPencil }, drawLineCmd)
       else
         (model, Cmd.none)
 
@@ -76,7 +97,7 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
   Sub.batch
     [ canvasMouseMoved CanvasMouseMoved
-    , canvasMouseDown (\_ -> CanvasMouseDown)
+    , canvasMouseDown CanvasMouseDown
     , canvasMouseUp (\_ -> CanvasMouseUp)
     , canvasZoom Zoom
     , AnimationFrame.diffs AnimationFrame
@@ -111,8 +132,8 @@ colourStyle index colour =
 
 colourPicker index colour =
   div
-  [ style (colourStyle index (Colours.toHex colour))
-  , onClick (ColourSelected colour) ] []
+    [ style (colourStyle index (Colours.toHex colour))
+    , onClick (ColourSelected colour) ] []
 
 colourPalette visible =
   let
@@ -123,10 +144,22 @@ colourPalette visible =
         [ ("opacity", "0"), ("transition", "opacity 1s") ]
   in
     div [ style divstyle ]
-      (List.indexedMap colourPicker Colours.allColours)
+      ((List.indexedMap colourPicker Colours.allColours))
 
-canvasStyle =
-  [ ("cursor", "pointer") ]
+drawDragStyle =
+  [ ("width", "25px")
+  , ("height", "25px")
+  , ("position", "absolute")
+  , ("left", "325px")
+  , ("top", "50px")
+  , ("cursor", "pointer") ] ++ stopUserSelect
+
+drawDrag drawMode =
+  div [ style drawDragStyle, onClick ToggleDrawMode ]
+    [ img [ src (if drawMode then "drag.svg" else "pencil.svg"), width 25, height 25 ] [] ]
+
+canvasStyle drawMode =
+  [ ("cursor", (if drawMode then "crosshair" else "-webkit-grab")) ]
     ++ stopUserSelect
 
 debugDivStyle =
@@ -140,6 +173,7 @@ view : Model -> Html Msg
 view model =
   div [ ]
     [ colourPalette (model.zoom <= 500)
-    , canvas [ id "mycanvas", style canvasStyle ] []
+    , drawDrag model.drawMode
+    , canvas [ id "mycanvas", style (canvasStyle model.drawMode) ] []
     , debugDiv model
     ]

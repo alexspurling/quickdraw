@@ -29,7 +29,7 @@ gulp.task('prepare-js', ['lint', 'elm-make'], function() {
 });
 
 gulp.task('prepare-html', function() {
-  return gulp.src(['src/*.html'])
+  return gulp.src(['src/*.html', 'img/*'])
     .pipe(gulp.dest('build/dist'));
 });
 
