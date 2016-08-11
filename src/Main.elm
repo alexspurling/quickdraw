@@ -139,8 +139,8 @@ drawDragStyle =
   [ ("width", "25px")
   , ("height", "25px")
   , ("position", "absolute")
-  , ("left", "325px")
-  , ("top", "50px")
+  , ("left", "20")
+  , ("top", "80px")
   , ("cursor", "pointer") ] ++ stopUserSelect
 
 drawDrag drawMode =
