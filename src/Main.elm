@@ -7,8 +7,14 @@ import Html exposing (Html, button, div, text, h1, canvas, img)
 import Html.Attributes exposing (id, height, width, style, src)
 import Html.Events exposing (onClick)
 import Html.App as App
+import Json.Encode as JE exposing (Value, object)
+import Json.Decode as JD exposing ((:=), object2, object4)
 import Mouse exposing (Position)
 import Time exposing (Time)
+
+import Phoenix.Socket
+import Phoenix.Channel
+import Phoenix.Push
 
 import Canvas exposing (..)
 import Colours exposing (Colour)
@@ -21,7 +27,8 @@ main =
 -- MODEL
 
 type alias Model =
-  { pencil : Pencil.Model
+  { phxSocket : Phoenix.Socket.Socket Msg
+  , pencil : Pencil.Model
   , mouseDown : Bool
   , curColour : Colour
   , zoom : Int
@@ -31,15 +38,44 @@ type alias Model =
   }
 
 init : (Model, Cmd Msg)
-init = (
-  { pencil = Pencil.init
-  , mouseDown = False
-  , curColour = Colours.Black
-  , zoom = 0
-  , drawMode = True
-  , selectedDrawMode = True
-  , drag = Drag.init }
-  , loadCanvas ())
+init =
+  let
+    (phxSocket, phxCmd) = initPhoenix
+  in
+    { phxSocket = phxSocket
+    , pencil = Pencil.init
+    , mouseDown = False
+    , curColour = Colours.Black
+    , zoom = 0
+    , drawMode = True
+    , selectedDrawMode = True
+    , drag = Drag.init }
+    ! [loadCanvas (), phxCmd]
+
+
+initPhoenix : (Phoenix.Socket.Socket Msg, Cmd Msg)
+initPhoenix =
+  initPhxSocket
+    |> joinChannel
+
+socketServer : String
+socketServer =
+  "ws://localhost:4000/socket/websocket?username=quickdraw"
+
+initPhxSocket : Phoenix.Socket.Socket Msg
+initPhxSocket =
+  Phoenix.Socket.init socketServer
+    |> Phoenix.Socket.on "new:msg" "room:lobby" ReceiveChatMessage
+
+joinChannel : Phoenix.Socket.Socket Msg -> (Phoenix.Socket.Socket Msg, Cmd Msg)
+joinChannel phxSocket =
+  let
+    channel =
+      Phoenix.Channel.init "room:lobby"
+    (newPhxSocket, phxCmd) =
+      Phoenix.Socket.join channel phxSocket
+  in
+    (newPhxSocket, Cmd.map PhoenixMsg phxCmd)
 
 -- UPDATE
 
@@ -50,6 +86,8 @@ type Msg = CanvasMouseMoved MouseMovedEvent
   | Zoom ZoomAmount
   | AnimationFrame Time
   | ToggleDrawMode
+  | PhoenixMsg (Phoenix.Socket.Msg Msg)
+  | ReceiveChatMessage JE.Value
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -82,14 +120,90 @@ update msg model =
           (model, moveCanvas (Drag.dragTo model.pencil.curMousePos model.drag))
         else
           let
-            lineToDraw = (Pencil.getLine model.pencil (Colours.toHex model.curColour))
-            drawLineCmd = drawLine lineToDraw
-            newPencil = Pencil.update (Pencil.UpdatePrevPositions lineToDraw.lineMid) model.pencil
+            (pencil, lineToDraw, drawLineCmd) = updatePencil model.pencil model.curColour
+            (phxSocket, phxCmd) = sendDraw model.phxSocket lineToDraw
           in
-            ({ model | pencil = newPencil }, drawLineCmd)
+            { model | pencil = pencil, phxSocket = phxSocket }
+            ! [ drawLineCmd, phxCmd ]
       else
         (model, Cmd.none)
+    PhoenixMsg msg ->
+      let
+        ( phxSocket, phxCmd ) =
+          Phoenix.Socket.update msg model.phxSocket
+      in
+        ( { model | phxSocket = phxSocket }
+        , Cmd.map PhoenixMsg phxCmd
+        )
+    ReceiveChatMessage payload ->
+      let
+        payloadDecoder = ("body" := lineDecoder)
+        drawLineCmd =
+          case JD.decodeValue payloadDecoder payload of
+            Ok line -> drawLine line
+            Err error ->
+              let
+                _ = Debug.log "Failed to decode payload" error
+              in
+                Cmd.none
+      in
+        (model, drawLineCmd)
 
+updatePencil : Pencil.Model -> Colour -> (Pencil.Model, Line, Cmd Msg)
+updatePencil pencil colour =
+  let
+    lineToDraw = (Pencil.getLine pencil (Colours.toHex colour))
+    drawLineCmd = drawLine lineToDraw
+    newPencil = Pencil.update (Pencil.UpdatePrevPositions lineToDraw.lineMid) pencil
+  in
+    (newPencil, lineToDraw, drawLineCmd)
+
+sendDraw : Phoenix.Socket.Socket Msg -> Line -> (Phoenix.Socket.Socket Msg, Cmd Msg)
+sendDraw phxSocket line =
+  let
+    payload =
+      (JE.object [ ( "body", encodeLine line ) ])
+
+    push' =
+      Phoenix.Push.init "new:msg" "room:lobby"
+        |> Phoenix.Push.withPayload payload
+
+    ( newPhxSocket, phxCmd ) =
+      Phoenix.Socket.push push' phxSocket
+  in
+    ( newPhxSocket
+    , Cmd.map PhoenixMsg phxCmd
+    )
+
+encodeLine : Line -> JE.Value
+encodeLine line =
+  object
+    [ ("lastMid", encodePosition line.lastMid)
+    , ("lineFrom", encodePosition line.lineFrom)
+    , ("lineMid", encodePosition line.lineMid)
+    , ("colour", JE.string line.colour)
+    ]
+
+encodePosition : Position -> JE.Value
+encodePosition pos =
+  object
+    [ ("x", JE.int pos.x)
+    , ("y", JE.int pos.y)
+    ]
+
+lineDecoder : JD.Decoder Line
+lineDecoder =
+  object4 Line
+    ("lastMid" := positionDecoder)
+    ("lineFrom" := positionDecoder)
+    ("lineMid" := positionDecoder)
+    ("colour" := JD.string)
+
+positionDecoder : JD.Decoder Position
+positionDecoder =
+  object2 Position
+    ("x" := JD.int)
+    ("y" := JD.int)
 
 -- SUBSCRIPTIONS
 
@@ -101,6 +215,7 @@ subscriptions model =
     , canvasMouseUp (\_ -> CanvasMouseUp)
     , canvasZoom Zoom
     , AnimationFrame.diffs AnimationFrame
+    , Phoenix.Socket.listen model.phxSocket PhoenixMsg
     ]
 
 -- VIEW
@@ -168,7 +283,7 @@ debugDivStyle =
     ++ stopUserSelect
 
 debugDiv model =
-  div [ id "debug", style debugDivStyle ] [ text ("Model: " ++ (toString model)) ]
+  div [ id "debug", style debugDivStyle ] [ text ("Model: " ++ (toString model.pencil)) ]
 
 view : Model -> Html Msg
 view model =
