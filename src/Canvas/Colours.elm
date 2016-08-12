@@ -1,4 +1,4 @@
-module Colours exposing (..)
+module Canvas.Colours exposing (..)
 
 type Colour = Red
   | Pink

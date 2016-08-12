@@ -1,9 +1,9 @@
-module Drag exposing (..)
+module Canvas.Drag exposing (..)
 
 import Mouse exposing (Position)
 
-import Canvas exposing (..)
-import Vector exposing (..)
+import Canvas.Ports exposing (..)
+import Canvas.Vector exposing (..)
 
 type alias Model =
   { dragging : Bool

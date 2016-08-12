@@ -1,4 +1,4 @@
-module Vector exposing (..)
+module Canvas.Vector exposing (..)
 
 import Mouse exposing (Position)
 

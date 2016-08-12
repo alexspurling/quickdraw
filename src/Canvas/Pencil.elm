@@ -1,9 +1,9 @@
-module Pencil exposing (..)
+module Canvas.Pencil exposing (..)
 
 import Mouse exposing (Position)
 
-import Canvas exposing (..)
-import Vector exposing (..)
+import Canvas.Ports exposing (..)
+import Canvas.Vector exposing (..)
 
 type alias Model =
   { curMousePos : Position

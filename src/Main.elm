@@ -1,56 +1,46 @@
 module Main exposing (..)
 
-import AnimationFrame
-import Collage
-import Element
+import Html.App as App
 import Html exposing (Html, button, div, text, h1, canvas, img)
 import Html.Attributes exposing (id, height, width, style, src)
 import Html.Events exposing (onClick)
-import Html.App as App
+
 import Json.Encode as JE exposing (Value, object)
 import Json.Decode as JD exposing ((:=), object2, object4)
 import Mouse exposing (Position)
-import Time exposing (Time)
 
 import Phoenix.Socket
 import Phoenix.Channel
 import Phoenix.Push
 
-import Canvas exposing (..)
-import Colours exposing (Colour)
-import Drag
-import Pencil
+import Canvas.Canvas as Canvas
+import Canvas.Ports exposing (..)
+import Canvas.Colours as Colours exposing (Colour)
 
 main =
    App.program { init = init, view = view, update = update, subscriptions = subscriptions }
 
--- MODEL
-
 type alias Model =
   { phxSocket : Phoenix.Socket.Socket Msg
-  , pencil : Pencil.Model
-  , mouseDown : Bool
-  , curColour : Colour
-  , zoom : Int
-  , drawMode : Bool
-  , selectedDrawMode : Bool
-  , drag : Drag.Model
+  , canvas : Canvas.Model
   }
+
+type Msg =
+  CanvasMsg Canvas.Msg
+  | PhoenixMsg (Phoenix.Socket.Msg Msg)
+  | ReceiveChatMessage JE.Value
+
+-- INIT
 
 init : (Model, Cmd Msg)
 init =
   let
     (phxSocket, phxCmd) = initPhoenix
+    (canvas, canvasCmd) = Canvas.init
   in
     { phxSocket = phxSocket
-    , pencil = Pencil.init
-    , mouseDown = False
-    , curColour = Colours.Black
-    , zoom = 0
-    , drawMode = True
-    , selectedDrawMode = True
-    , drag = Drag.init }
-    ! [loadCanvas (), phxCmd]
+    , canvas = canvas }
+    ! [Cmd.map CanvasMsg canvasCmd, phxCmd]
 
 
 initPhoenix : (Phoenix.Socket.Socket Msg, Cmd Msg)
@@ -77,56 +67,25 @@ joinChannel phxSocket =
   in
     (newPhxSocket, Cmd.map PhoenixMsg phxCmd)
 
--- UPDATE
 
-type Msg = CanvasMouseMoved MouseMovedEvent
-  | CanvasMouseDown Position
-  | CanvasMouseUp
-  | ColourSelected Colour
-  | Zoom ZoomAmount
-  | AnimationFrame Time
-  | ToggleDrawMode
-  | PhoenixMsg (Phoenix.Socket.Msg Msg)
-  | ReceiveChatMessage JE.Value
+-- UPDATE
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    CanvasMouseMoved event ->
+    CanvasMsg canvasMsg ->
       let
-        newPencil = Pencil.update (Pencil.CanvasMouseMoved event) model.pencil
+        (newCanvas, canvasCmd, lineToDraw) = Canvas.update canvasMsg model.canvas
+        --If this updated produced a line, then create a phxCmd to send
+        --the line to the server
+        (phxSocket, phxCmd) =
+          case lineToDraw of
+            Just line ->
+              sendDraw model.phxSocket line
+            Nothing ->
+              (model.phxSocket, Cmd.none)
       in
-        ({ model | pencil = newPencil, mouseDown = event.mouseDown }, Cmd.none)
-    CanvasMouseDown mousePos ->
-      ({ model | mouseDown = True, drag = Drag.dragStart model.drag mousePos }, Cmd.none)
-    CanvasMouseUp ->
-      ({ model | mouseDown = False, drag = Drag.dragStop model.drag }, Cmd.none)
-    ColourSelected colour ->
-      ({ model | curColour = colour }, Cmd.none)
-    Zoom zoom ->
-      let
-        drawMode = model.selectedDrawMode && (zoom <= 500)
-      in
-        ({ model | zoom = zoom, drawMode = drawMode }, Cmd.none)
-    ToggleDrawMode ->
-      let
-        selectedDrawMode = not model.selectedDrawMode
-      in
-        ({ model | drawMode = selectedDrawMode, selectedDrawMode = selectedDrawMode }, Cmd.none)
-    AnimationFrame delta ->
-      if model.mouseDown then
-        if (not model.drawMode) && model.drag.dragging then
-          --Adjust cur pos
-          (model, moveCanvas (Drag.dragTo model.pencil.curMousePos model.drag))
-        else
-          let
-            (pencil, lineToDraw, drawLineCmd) = updatePencil model.pencil model.curColour
-            (phxSocket, phxCmd) = sendDraw model.phxSocket lineToDraw
-          in
-            { model | pencil = pencil, phxSocket = phxSocket }
-            ! [ drawLineCmd, phxCmd ]
-      else
-        (model, Cmd.none)
+        {model | canvas = newCanvas} ! [Cmd.map CanvasMsg canvasCmd, phxCmd]
     PhoenixMsg msg ->
       let
         ( phxSocket, phxCmd ) =
@@ -149,31 +108,6 @@ update msg model =
       in
         (model, drawLineCmd)
 
-updatePencil : Pencil.Model -> Colour -> (Pencil.Model, Line, Cmd Msg)
-updatePencil pencil colour =
-  let
-    lineToDraw = (Pencil.getLine pencil (Colours.toHex colour))
-    drawLineCmd = drawLine lineToDraw
-    newPencil = Pencil.update (Pencil.UpdatePrevPositions lineToDraw.lineMid) pencil
-  in
-    (newPencil, lineToDraw, drawLineCmd)
-
-sendDraw : Phoenix.Socket.Socket Msg -> Line -> (Phoenix.Socket.Socket Msg, Cmd Msg)
-sendDraw phxSocket line =
-  let
-    payload =
-      (JE.object [ ( "body", encodeLine line ) ])
-
-    push' =
-      Phoenix.Push.init "new:msg" "room:lobby"
-        |> Phoenix.Push.withPayload payload
-
-    ( newPhxSocket, phxCmd ) =
-      Phoenix.Socket.push push' phxSocket
-  in
-    ( newPhxSocket
-    , Cmd.map PhoenixMsg phxCmd
-    )
 
 encodeLine : Line -> JE.Value
 encodeLine line =
@@ -205,18 +139,22 @@ positionDecoder =
     ("x" := JD.int)
     ("y" := JD.int)
 
--- SUBSCRIPTIONS
+sendDraw : Phoenix.Socket.Socket Msg -> Line -> (Phoenix.Socket.Socket Msg, Cmd Msg)
+sendDraw phxSocket line =
+  let
+    payload =
+      (JE.object [ ( "body", encodeLine line ) ])
 
-subscriptions : Model -> Sub Msg
-subscriptions model =
-  Sub.batch
-    [ canvasMouseMoved CanvasMouseMoved
-    , canvasMouseDown CanvasMouseDown
-    , canvasMouseUp (\_ -> CanvasMouseUp)
-    , canvasZoom Zoom
-    , AnimationFrame.diffs AnimationFrame
-    , Phoenix.Socket.listen model.phxSocket PhoenixMsg
-    ]
+    push' =
+      Phoenix.Push.init "new:msg" "room:lobby"
+        |> Phoenix.Push.withPayload payload
+
+    ( newPhxSocket, phxCmd ) =
+      Phoenix.Socket.push push' phxSocket
+  in
+    ( newPhxSocket
+    , Cmd.map PhoenixMsg phxCmd
+    )
 
 -- VIEW
 
@@ -248,7 +186,7 @@ colourStyle index colour =
 colourPicker index colour =
   div
     [ style (colourStyle index (Colours.toHex colour))
-    , onClick (ColourSelected colour) ] []
+    , onClick (CanvasMsg (Canvas.ColourSelected colour)) ] []
 
 drawDragStyle =
   [ ("width", "25px")
@@ -259,7 +197,7 @@ drawDragStyle =
   , ("cursor", "pointer") ] ++ stopUserSelect
 
 drawDrag drawMode =
-  div [ style drawDragStyle, onClick ToggleDrawMode ]
+  div [ style drawDragStyle, onClick (CanvasMsg Canvas.ToggleDrawMode) ]
     [ img [ src (if drawMode then "drag.svg" else "pencil.svg"), width 25, height 25 ] [] ]
 
 colourPalette visible selectedDrawMode =
@@ -283,12 +221,21 @@ debugDivStyle =
     ++ stopUserSelect
 
 debugDiv model =
-  div [ id "debug", style debugDivStyle ] [ text ("Model: " ++ (toString model.pencil)) ]
+  div [ id "debug", style debugDivStyle ] [ text ("Model: " ++ (toString model.canvas.pencil)) ]
 
 view : Model -> Html Msg
 view model =
   div [ ]
-    [ colourPalette (model.zoom <= 500) model.selectedDrawMode
-    , canvas [ id "mycanvas", style (canvasStyle model.drawMode) ] []
+    [ colourPalette (model.canvas.zoom <= 500) model.canvas.selectedDrawMode
+    , canvas [ id "mycanvas", style (canvasStyle model.canvas.drawMode) ] []
     , debugDiv model
+    ]
+
+--SUBSCRIPTIONS
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+  Sub.batch
+    [ Phoenix.Socket.listen model.phxSocket PhoenixMsg
+    , Sub.map CanvasMsg (Canvas.subscriptions model.canvas)
     ]

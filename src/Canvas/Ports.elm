@@ -1,4 +1,4 @@
-port module Canvas exposing (..)
+port module Canvas.Ports exposing (..)
 
 import Mouse exposing (Position)
 
