@@ -1,4 +1,16 @@
-- implement zooming in and out
+
+- display the correct cursor on both chrome and firefox
+- allow different pencil widths
+- allow erase (white colour?)
+- allow drawing without moving mouse
+
+- server side
+  - generate a unique client id
+  - do not broadcast draw messages to the current user
+
+DONE
+
++ implement zooming in and out
   + calculate scale factor
   + adjust number of tiles based on scale factor
   + adjust rendering from tile map based on scale factor
@@ -7,12 +19,7 @@
   + zoom out from cursor position
   + change size of pencil when zooming
 
-- allow drawing without moving mouse
-
-- allow erase (white colour?)
-- button to toggle between pan and draw
-
--
++ button to toggle between pan and draw
 
 + debug tiles disappearing when scrolling right
 + tile pixels duplicated / lost when drawing / scrolling

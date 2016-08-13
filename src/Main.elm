@@ -2,7 +2,7 @@ module Main exposing (..)
 
 import Html.App as App
 import Html exposing (Html, button, div, text, h1, canvas, img)
-import Html.Attributes exposing (id, height, width, style, src)
+import Html.Attributes exposing (id, height, width, style, src, class)
 import Html.Events exposing (onClick)
 
 import Json.Encode as JE exposing (Value, object)
@@ -158,14 +158,6 @@ sendDraw phxSocket line =
 
 -- VIEW
 
-stopUserSelect =
-  [ ("-webkit-touch-callout", "none")
-  , ("-webkit-user-select", "none")
-  , ("-khtml-user-select", "none")
-  , ("-moz-user-select", "none")
-  , ("-ms-user-select", "none")
-  , ("user-select", "none") ]
-
 canvasDivStyle =
   [ ("position", "relative" ) ]
 
@@ -181,7 +173,6 @@ colourStyle index colour =
     , ("left", (toString left) ++ "px")
     , ("top", (toString top) ++ "px")
      ]
-      ++ stopUserSelect
 
 colourPicker index colour =
   div
@@ -194,7 +185,7 @@ drawDragStyle =
   , ("position", "absolute")
   , ("left", "20")
   , ("top", "80px")
-  , ("cursor", "pointer") ] ++ stopUserSelect
+  , ("cursor", "pointer") ]
 
 drawDrag drawMode =
   div [ style drawDragStyle, onClick (CanvasMsg Canvas.ToggleDrawMode) ]
@@ -212,13 +203,11 @@ colourPalette visible selectedDrawMode =
       ((List.indexedMap colourPicker Colours.allColours) ++
       [drawDrag selectedDrawMode])
 
-canvasStyle drawMode =
-  [ ("cursor", (if drawMode then "crosshair" else "-webkit-grab")) ]
-    ++ stopUserSelect
+canvasClass drawMode dragging =
+   (if drawMode then "draw" else (if dragging then "dragging" else "drag"))
 
 debugDivStyle =
   [("position", "absolute"), ("bottom", "50px")]
-    ++ stopUserSelect
 
 debugDiv model =
   div [ id "debug", style debugDivStyle ] [ text ("Model: " ++ (toString model.canvas.pencil)) ]
@@ -227,7 +216,7 @@ view : Model -> Html Msg
 view model =
   div [ ]
     [ colourPalette (model.canvas.zoom <= 500) model.canvas.selectedDrawMode
-    , canvas [ id "mycanvas", style (canvasStyle model.canvas.drawMode) ] []
+    , canvas [ id "mycanvas", class (canvasClass model.canvas.drawMode model.canvas.drag.dragging) ] []
     , debugDiv model
     ]
 
