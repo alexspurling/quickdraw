@@ -228,8 +228,7 @@ eraserStyle =
   , ("height", "25px")
   , ("position", "absolute")
   , ("left", "110px")
-  , ("top", "80px")
-  , ("cursor", "pointer") ]
+  , ("top", "80px") ]
 
 eraser =
   div [ style eraserStyle, onClick (CanvasMsg (Canvas.ColourSelected Colours.White) ) ]
@@ -240,8 +239,7 @@ drawDragStyle =
   , ("height", "25px")
   , ("position", "absolute")
   , ("left", "140px")
-  , ("top", "80px")
-  , ("cursor", "pointer") ]
+  , ("top", "80px") ]
 
 drawDrag drawMode =
   div [ style drawDragStyle, onClick (CanvasMsg Canvas.ToggleDrawMode) ]
