@@ -20,6 +20,7 @@ type Colour = Red
   | Grey
   | BlueGrey
   | Black
+  | White
 
 allColours =
   [ Red
@@ -41,7 +42,7 @@ allColours =
   , Brown
   , Grey
   , BlueGrey
-  , Black]
+  , Black ]
 
 toHex : Colour -> String
 toHex colour =
@@ -66,3 +67,4 @@ toHex colour =
     Grey -> "#9D9D9D"
     BlueGrey -> "#5E7C8B"
     Black -> "#000000"
+    White -> "#FFFFFF"

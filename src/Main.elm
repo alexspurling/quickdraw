@@ -183,13 +183,25 @@ drawDragStyle =
   [ ("width", "25px")
   , ("height", "25px")
   , ("position", "absolute")
-  , ("left", "20")
-  , ("top", "80px")
+  , ("left", "50")
+  , ("top", "80")
   , ("cursor", "pointer") ]
 
 drawDrag drawMode =
   div [ style drawDragStyle, onClick (CanvasMsg Canvas.ToggleDrawMode) ]
     [ img [ src (if drawMode then "drag.svg" else "pencil.svg"), width 25, height 25 ] [] ]
+
+eraserStyle =
+  [ ("width", "25px")
+  , ("height", "25px")
+  , ("position", "absolute")
+  , ("left", "20")
+  , ("top", "80")
+  , ("cursor", "pointer") ]
+
+eraser =
+  div [ style eraserStyle, onClick (CanvasMsg (Canvas.ColourSelected Colours.White) ) ]
+      [ img [ src "eraser.svg", width 25, height 25 ] [] ]
 
 colourPalette visible selectedDrawMode =
   let
@@ -201,7 +213,9 @@ colourPalette visible selectedDrawMode =
   in
     div [ style divstyle ]
       ((List.indexedMap colourPicker Colours.allColours) ++
-      [drawDrag selectedDrawMode])
+      [ eraser
+      , drawDrag selectedDrawMode]
+      )
 
 canvasClass drawMode dragging =
    (if drawMode then "draw" else (if dragging then "dragging" else "drag"))
