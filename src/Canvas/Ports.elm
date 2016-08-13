@@ -10,7 +10,8 @@ type alias Line =
   { lastMid : Position
   , lineFrom : Position
   , lineMid : Position
-  , colour : String }
+  , colour : String
+  , width : Int }
 
 type alias ZoomAmount = Int
 

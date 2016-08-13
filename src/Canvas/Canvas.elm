@@ -21,6 +21,7 @@ type alias Model =
   , drawMode : Bool
   , selectedDrawMode : Bool
   , drag : Drag.Model
+  , lineWidth : Int
   }
 
 init : (Model, Cmd Msg)
@@ -31,7 +32,8 @@ init =
   , zoom = 0
   , drawMode = True
   , selectedDrawMode = True
-  , drag = Drag.init }
+  , drag = Drag.init
+  , lineWidth = 10 }
   , loadCanvas () )
 
 -- UPDATE
@@ -43,6 +45,7 @@ type Msg = CanvasMouseMoved MouseMovedEvent
   | Zoom ZoomAmount
   | AnimationFrame Time
   | ToggleDrawMode
+  | PencilSizeSelected Int
 
 update : Msg -> Model -> (Model, Cmd Msg, Maybe Line)
 update msg model =
@@ -55,7 +58,7 @@ update msg model =
         else
           --Or draw line on canvas
           let
-            (pencil, lineToDraw, drawLineCmd) = updatePencil model.pencil model.curColour
+            (pencil, lineToDraw, drawLineCmd) = updatePencil model.pencil model.curColour model.lineWidth
           in
             ({ model | pencil = pencil }, drawLineCmd, Maybe.Just lineToDraw)
       else
@@ -87,13 +90,15 @@ updateRest msg model =
         selectedDrawMode = not model.selectedDrawMode
       in
         { model | drawMode = selectedDrawMode, selectedDrawMode = selectedDrawMode }
+    PencilSizeSelected size ->
+      {model | lineWidth = size}
     AnimationFrame delta ->
       Debug.crash "Should never get here"
 
-updatePencil : Pencil.Model -> Colour -> (Pencil.Model, Line, Cmd Msg)
-updatePencil pencil colour =
+updatePencil : Pencil.Model -> Colour -> Int -> (Pencil.Model, Line, Cmd Msg)
+updatePencil pencil colour lineWidth =
   let
-    lineToDraw = (Pencil.getLine pencil (Colours.toHex colour))
+    lineToDraw = (Pencil.getLine pencil (Colours.toHex colour) lineWidth)
     drawLineCmd = drawLine lineToDraw
     newPencil = Pencil.update (Pencil.UpdatePrevPositions lineToDraw.lineMid) pencil
   in

@@ -6,8 +6,11 @@ import Html.Attributes exposing (id, height, width, style, src, class)
 import Html.Events exposing (onClick)
 
 import Json.Encode as JE exposing (Value, object)
-import Json.Decode as JD exposing ((:=), object2, object4)
+import Json.Decode as JD exposing ((:=), object2, object5)
 import Mouse exposing (Position)
+
+import Svg exposing (svg, circle)
+import Svg.Attributes exposing (version, viewBox, fill, x, y, cx, cy, r)
 
 import Phoenix.Socket
 import Phoenix.Channel
@@ -116,6 +119,7 @@ encodeLine line =
     , ("lineFrom", encodePosition line.lineFrom)
     , ("lineMid", encodePosition line.lineMid)
     , ("colour", JE.string line.colour)
+    , ("width", JE.int line.width)
     ]
 
 encodePosition : Position -> JE.Value
@@ -127,11 +131,12 @@ encodePosition pos =
 
 lineDecoder : JD.Decoder Line
 lineDecoder =
-  object4 Line
+  object5 Line
     ("lastMid" := positionDecoder)
     ("lineFrom" := positionDecoder)
     ("lineMid" := positionDecoder)
     ("colour" := JD.string)
+    ("width" := JD.int)
 
 positionDecoder : JD.Decoder Position
 positionDecoder =
@@ -161,10 +166,15 @@ sendDraw phxSocket line =
 canvasDivStyle =
   [ ("position", "relative" ) ]
 
-colourStyle index colour =
+colourStyle index colour selected =
   let
-    left = 20 + (index % 10 * 30)
-    top = 20 + (index // 10 * 30)
+    --Adjust the position up and to the left by 1 pixel to account for
+    --the extra width of the border when colour is selected
+    posAdjustment = if selected then 1 else 0
+    left = 20 + (index % 10 * 30) - posAdjustment
+    top = 20 + (index // 10 * 30) - posAdjustment
+    border = if selected then "1px solid " ++ colour else ""
+    borderRadius = if selected then "2px" else ""
   in
     [ ("width", "25px")
     , ("height", "25px")
@@ -172,38 +182,72 @@ colourStyle index colour =
     , ("position", "absolute")
     , ("left", (toString left) ++ "px")
     , ("top", (toString top) ++ "px")
-     ]
+    , ("border", border)
+    , ("border-radius", borderRadius)
+    ]
 
-colourPicker index colour =
-  div
-    [ style (colourStyle index (Colours.toHex colour))
-    , onClick (CanvasMsg (Canvas.ColourSelected colour)) ] []
+colourPicker curColour index colour =
+  let
+    selected = curColour == colour
+  in
+    div
+      [ style (colourStyle index (Colours.toHex colour) selected)
+      , onClick (CanvasMsg (Canvas.ColourSelected colour)) ] []
 
-drawDragStyle =
-  [ ("width", "25px")
-  , ("height", "25px")
-  , ("position", "absolute")
-  , ("left", "50")
-  , ("top", "80")
-  , ("cursor", "pointer") ]
+pencilSizeImage colour size =
+  svg
+    [ version "1.1", x "0", y "0", viewBox "0 0 50 50" ]
+    [ circle [fill (Colours.toHex colour), cx "25", cy "25", r (toString size)] [] ]
 
-drawDrag drawMode =
-  div [ style drawDragStyle, onClick (CanvasMsg Canvas.ToggleDrawMode) ]
-    [ img [ src (if drawMode then "drag.svg" else "pencil.svg"), width 25, height 25 ] [] ]
+pencilStyle index selected =
+  let
+    posAdjustment = if selected then 1 else 0
+    left = 20 + (index % 10 * 30) - posAdjustment
+    top = 80 - posAdjustment
+    border = if selected then "1px solid #ccc" else ""
+    borderRadius = if selected then "2px" else ""
+  in
+    [ ("width", "25px")
+    , ("height", "25px")
+    , ("position", "absolute")
+    , ("left", (toString left) ++ "px")
+    , ("top", (toString top) ++ "px")
+    , ("border", border)
+    , ("border-radius", borderRadius)
+    ]
+
+pencilSize curColour curLineWidth index size =
+  let
+    selected = size == curLineWidth
+  in
+    div
+      [ style (pencilStyle index selected), onClick (CanvasMsg (Canvas.PencilSizeSelected size)) ] [ pencilSizeImage curColour size ]
 
 eraserStyle =
   [ ("width", "25px")
   , ("height", "25px")
   , ("position", "absolute")
-  , ("left", "20")
-  , ("top", "80")
+  , ("left", "110px")
+  , ("top", "80px")
   , ("cursor", "pointer") ]
 
 eraser =
   div [ style eraserStyle, onClick (CanvasMsg (Canvas.ColourSelected Colours.White) ) ]
       [ img [ src "eraser.svg", width 25, height 25 ] [] ]
 
-colourPalette visible selectedDrawMode =
+drawDragStyle =
+  [ ("width", "25px")
+  , ("height", "25px")
+  , ("position", "absolute")
+  , ("left", "140px")
+  , ("top", "80px")
+  , ("cursor", "pointer") ]
+
+drawDrag drawMode =
+  div [ style drawDragStyle, onClick (CanvasMsg Canvas.ToggleDrawMode) ]
+    [ img [ src (if drawMode then "drag.svg" else "pencil.svg"), width 25, height 25 ] [] ]
+
+colourPalette visible selectedDrawMode curColour curLineWidth =
   let
     divstyle =
       if visible then
@@ -212,7 +256,8 @@ colourPalette visible selectedDrawMode =
         [ ("opacity", "0"), ("transition", "opacity 1s") ]
   in
     div [ style divstyle ]
-      ((List.indexedMap colourPicker Colours.allColours) ++
+      ((List.indexedMap (colourPicker curColour) Colours.allColours) ++
+      (List.indexedMap (pencilSize curColour curLineWidth) [5, 10, 22]) ++
       [ eraser
       , drawDrag selectedDrawMode]
       )
@@ -229,7 +274,7 @@ debugDiv model =
 view : Model -> Html Msg
 view model =
   div [ ]
-    [ colourPalette (model.canvas.zoom <= 500) model.canvas.selectedDrawMode
+    [ colourPalette (model.canvas.zoom <= 500) model.canvas.selectedDrawMode model.canvas.curColour model.canvas.lineWidth
     , canvas [ id "mycanvas", class (canvasClass model.canvas.drawMode model.canvas.drag.dragging) ] []
     , debugDiv model
     ]

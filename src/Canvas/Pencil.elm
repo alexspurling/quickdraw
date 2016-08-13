@@ -38,12 +38,12 @@ update msg model =
     UpdatePrevPositions midPoint ->
       {model | prevMousePos = model.curMousePos, prevMidPoint = midPoint}
 
-getLine : Model -> String -> Line
-getLine model colour =
+getLine : Model -> String -> Int -> Line
+getLine model colour width =
   let
     curMid = calculateMidPosition model.prevMousePos model.curMousePos
   in
-    Line model.prevMidPoint model.prevMousePos curMid colour
+    Line model.prevMidPoint model.prevMousePos curMid colour width
 
 --Calculate the halfway point between two points
 calculateMidPosition : Position -> Position -> Position

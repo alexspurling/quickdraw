@@ -204,13 +204,13 @@ function drawLine(line) {
 
   for (var i = minI; i <= maxI; i++) {
     for (var j = minJ; j <= maxJ; j++) {
-       drawLineOnTile(i, j, line.lastMid, line.lineFrom, line.lineMid, line.colour);
+       drawLineOnTile(i, j, line.lastMid, line.lineFrom, line.lineMid, line.colour, line.width);
        copyTileToCanvas(i, j);
     }
   }
 }
 
-function drawLineOnTile(i, j, lastMid, lineFrom, lineMid, colour) {
+function drawLineOnTile(i, j, lastMid, lineFrom, lineMid, colour, width) {
 
   var tile = tileMap[i][j];
 
@@ -226,6 +226,7 @@ function drawLineOnTile(i, j, lastMid, lineFrom, lineMid, colour) {
   var curveToTilePos = posOnTile(lineMid, i, j);
 
   tile.strokeStyle = colour;
+  tile.lineWidth = width;
   tile.beginPath();
   tile.moveTo(curveFromTilePos.x, curveFromTilePos.y);
   tile.quadraticCurveTo(curveMidTilePos.x, curveMidTilePos.y, curveToTilePos.x, curveToTilePos.y);
