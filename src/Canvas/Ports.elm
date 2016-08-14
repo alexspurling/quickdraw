@@ -1,19 +1,30 @@
 port module Canvas.Ports exposing (..)
 
-import Mouse exposing (Position)
+import Canvas.Vector exposing (Position)
 
 type alias MouseMovedEvent =
   { mousePos: Position
-  , mouseDown: Bool }
+  , mouseDown: Bool
+  }
 
 type alias Line =
   { lastMid : Position
   , lineFrom : Position
   , lineMid : Position
   , colour : String
-  , width : Int }
+  , width : Int
+  }
 
-type alias ZoomAmount = Int
+type alias WheelEvent =
+  { delta : Int
+  , mousePos : Position
+  }
+
+type alias CanvasState =
+  { zoom : Int
+  , scale : Float
+  , curPos : Position
+  }
 
 port loadCanvas : () -> Cmd msg
 
@@ -25,6 +36,8 @@ port canvasMouseDown : (Position -> msg) -> Sub msg
 
 port drawLine : (Line) -> Cmd msg
 
-port canvasZoom : (ZoomAmount -> msg) -> Sub msg
+port wheel : (WheelEvent -> msg) -> Sub msg
 
 port moveCanvas : Position -> Cmd msg
+
+port zoomCanvas : CanvasState -> Cmd msg

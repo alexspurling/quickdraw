@@ -1,7 +1,5 @@
 module Canvas.Drag exposing (..)
 
-import Mouse exposing (Position)
-
 import Canvas.Ports exposing (..)
 import Canvas.Vector exposing (..)
 

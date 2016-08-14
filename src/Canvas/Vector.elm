@@ -1,6 +1,9 @@
 module Canvas.Vector exposing (..)
 
-import Mouse exposing (Position)
+type alias Position =
+  { x : Int
+  , y : Int
+  }
 
 plus : Position -> Position -> Position
 plus pos1 pos2 =
@@ -10,13 +13,13 @@ minus : Position -> Position -> Position
 minus pos1 pos2 =
   {x = pos1.x - pos2.x, y = pos1.y - pos2.y}
 
-multiply : Position -> Int -> Position
+multiply : Position -> Float -> Position
 multiply pos scale =
-  {x = pos.x * scale, y = pos.y * scale}
+  {x = round ((toFloat pos.x) * scale), y = round ((toFloat pos.y) * scale)}
 
-divide : Position -> Int -> Position
+divide : Position -> Float -> Position
 divide pos scale =
-  {x = pos.x // scale, y = pos.y // scale}
+  {x = round ((toFloat pos.x) / scale), y = round ((toFloat pos.y) / scale)}
 
 zero : Position -> Bool
 zero pos =

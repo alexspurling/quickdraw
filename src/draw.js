@@ -100,8 +100,7 @@ app.ports.loadCanvas.subscribe(function() {
           delta *= 20;
       }
       var mousePos = {x: e.offsetX, y: e.offsetY};
-      zoomCanvas(delta, mousePos);
-      app.ports.canvasZoom.send(zoom);
+      app.ports.wheel.send({delta:delta, mousePos:mousePos});
   }, false);
 
   document.addEventListener("keydown", function (e) {
@@ -296,22 +295,13 @@ function visibleTiles(func) {
   }
 }
 
-function zoomCanvas(deltaY, mousePos) {
-  //Get the point on the canvas around which we want to scale
-  //This point should remain fixed as scale changes
-  var scaledCanvasX = mousePos.x * scale + curX;
-  var scaledCanvasY = mousePos.y * scale + curY;
+app.ports.zoomCanvas.subscribe(zoomCanvas);
 
-  zoom += deltaY;
-  zoom = Math.min(zoom, 3000);
-  zoom = Math.max(zoom, 0);
-  scale = Math.pow(2,(zoom / 1000));
-
-  //Adjust the current grid position so that the previous
-  //point below the mouse stays in the same location
-  curX = scaledCanvasX - (mousePos.x * scale);
-  curY = scaledCanvasY - (mousePos.y * scale);
-
+function zoomCanvas(canvasState) {
+  zoom = canvasState.zoom;
+  scale = canvasState.scale;
+  curX = canvasState.curPos.x;
+  curY = canvasState.curPos.y;
   createTiles();
   copyFromTileMap();
 }

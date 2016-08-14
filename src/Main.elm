@@ -6,7 +6,6 @@ import Html.Attributes exposing (id, style, class)
 
 import Json.Encode as JE exposing (Value, object)
 import Json.Decode as JD exposing ((:=), object2, object5)
-import Mouse exposing (Position)
 import Time exposing (Time)
 
 import Phoenix.Socket
@@ -17,6 +16,7 @@ import Canvas.Canvas as Canvas
 import Canvas.Ports exposing (..)
 import Canvas.Colours as Colours exposing (Colour)
 import Canvas.Controls as Controls
+import Canvas.Vector exposing (Position)
 
 main =
    App.program { init = init, view = view, update = update, subscriptions = subscriptions }
