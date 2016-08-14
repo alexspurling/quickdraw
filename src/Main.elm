@@ -188,8 +188,8 @@ colourPaletteView model =
       case controlMsg of
         Controls.ColourSelected colour ->
           CanvasMsg (Canvas.ColourSelected colour)
-        Controls.PencilSizeSelected size ->
-          CanvasMsg (Canvas.PencilSizeSelected size)
+        Controls.LineWidthSelected width ->
+          CanvasMsg (Canvas.LineWidthSelected width)
         Controls.ToggleDrawMode ->
           CanvasMsg (Canvas.ToggleDrawMode)
   in

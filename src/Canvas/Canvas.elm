@@ -44,7 +44,7 @@ type Msg = CanvasMouseMoved MouseMovedEvent
   | ColourSelected Colour
   | Zoom ZoomAmount
   | ToggleDrawMode
-  | PencilSizeSelected Int
+  | LineWidthSelected Int
 
 type AnimationMsg =
   AnimationFrame Time
@@ -90,8 +90,8 @@ update msg model =
         selectedDrawMode = not model.selectedDrawMode
       in
         { model | drawMode = selectedDrawMode, selectedDrawMode = selectedDrawMode }
-    PencilSizeSelected size ->
-      {model | lineWidth = size}
+    LineWidthSelected width ->
+      {model | lineWidth = width}
 
 updatePencil : Mouse.Model -> Colour -> Int -> (Mouse.Model, Line, Cmd Msg)
 updatePencil pencil colour lineWidth =

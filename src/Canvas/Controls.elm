@@ -13,7 +13,7 @@ import Canvas.Colours as Colours exposing (Colour)
 
 type Msg =
   ColourSelected Colour
-  | PencilSizeSelected Int
+  | LineWidthSelected Int
   | ToggleDrawMode
 
 
@@ -51,7 +51,7 @@ colourPicker curColour index colour =
       [ style (colourStyle index (Colours.toHex colour) selected)
       , onClick (ColourSelected colour) ] []
 
-pencilSizeImage colour size =
+lineWidthCircle colour size =
   svg
     [ version "1.1", x "0", y "0", viewBox "0 0 50 50" ]
     [ circle [fill (Colours.toHex colour), cx "25", cy "25", r (toString size)] [] ]
@@ -73,12 +73,12 @@ pencilStyle index selected =
     , ("border-radius", borderRadius)
     ]
 
-pencilSize curColour curLineWidth index size =
+pencilSize curColour curLineWidth index width =
   let
-    selected = size == curLineWidth
+    selected = width == curLineWidth
   in
     div
-      [ style (pencilStyle index selected), onClick (PencilSizeSelected size) ] [ pencilSizeImage curColour size ]
+      [ style (pencilStyle index selected), onClick (LineWidthSelected width) ] [ lineWidthCircle curColour width ]
 
 eraserStyle =
   [ ("width", "25px")
