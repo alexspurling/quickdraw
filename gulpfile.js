@@ -36,8 +36,8 @@ gulp.task('prepare-html', function() {
 gulp.task('build', ['prepare-js', 'prepare-html']);
 
 gulp.task('watch', ['build'], function() {
-  gulp.watch('src/*.elm', ['build']);
-  gulp.watch('src/*.js', ['build']);
+  gulp.watch('src/**/*.elm', ['build']);
+  gulp.watch('src/**/*.js', ['build']);
   gulp.watch('src/*.html', ['build']);
 });
 

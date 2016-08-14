@@ -14,7 +14,7 @@ import Canvas.Colours as Colours exposing (Colour)
 -- MODEL
 
 type alias Model =
-  { pencil : Mouse.Model
+  { mouse : Mouse.Model
   , mouseDown : Bool
   , curColour : Colour
   , zoom : Int
@@ -26,7 +26,7 @@ type alias Model =
 
 init : (Model, Cmd Msg)
 init =
-  ( { pencil = Mouse.init
+  ( { mouse = Mouse.init
   , mouseDown = False
   , curColour = Colours.Black
   , zoom = 0
@@ -35,6 +35,7 @@ init =
   , drag = Drag.init
   , lineWidth = 10 }
   , loadCanvas () )
+
 
 -- UPDATE
 
@@ -56,13 +57,15 @@ updateAnimationFrame msg model =
       if model.mouseDown then
         if (not model.drawMode) && model.drag.dragging then
           --Adjust cur pos
-          (model, moveCanvas (Drag.dragTo model.pencil.curMousePos model.drag), Maybe.Nothing)
+          (model, moveCanvas (Drag.dragTo model.mouse.curMousePos model.drag), Maybe.Nothing)
         else
           --Or draw line on canvas
           let
-            (pencil, lineToDraw, drawLineCmd) = updatePencil model.pencil model.curColour model.lineWidth
+            lineToDraw = (Mouse.getLine model.mouse (Colours.toHex model.curColour) model.lineWidth)
+            drawLineCmd = drawLine lineToDraw
+            newMouse = Mouse.update (Mouse.UpdatePrevPositions lineToDraw.lineMid) model.mouse
           in
-            ({ model | pencil = pencil }, drawLineCmd, Maybe.Just lineToDraw)
+            ({ model | mouse = newMouse }, drawLineCmd, Maybe.Just lineToDraw)
       else
         (model, Cmd.none, Maybe.Nothing)
 
@@ -71,9 +74,9 @@ update msg model =
   case msg of
     CanvasMouseMoved event ->
       let
-        newPencil = Mouse.update (Mouse.CanvasMouseMoved event) model.pencil
+        newMouse = Mouse.update (Mouse.CanvasMouseMoved event) model.mouse
       in
-        { model | pencil = newPencil, mouseDown = event.mouseDown }
+        { model | mouse = newMouse, mouseDown = event.mouseDown }
     CanvasMouseDown mousePos ->
       { model | mouseDown = True, drag = Drag.dragStart model.drag mousePos }
     CanvasMouseUp ->
@@ -92,16 +95,6 @@ update msg model =
         { model | drawMode = selectedDrawMode, selectedDrawMode = selectedDrawMode }
     LineWidthSelected width ->
       {model | lineWidth = width}
-
-updatePencil : Mouse.Model -> Colour -> Int -> (Mouse.Model, Line, Cmd Msg)
-updatePencil pencil colour lineWidth =
-  let
-    lineToDraw = (Mouse.getLine pencil (Colours.toHex colour) lineWidth)
-    drawLineCmd = drawLine lineToDraw
-    newPencil = Mouse.update (Mouse.UpdatePrevPositions lineToDraw.lineMid) pencil
-  in
-    (newPencil, lineToDraw, drawLineCmd)
-
 
 
 -- SUBSCRIPTIONS

@@ -179,7 +179,7 @@ debugDivStyle =
   [("position", "absolute"), ("bottom", "50px")]
 
 debugDiv model =
-  div [ id "debug", style debugDivStyle ] [ text ("Model: " ++ (toString model.canvas.pencil)) ]
+  div [ id "debug", style debugDivStyle ] [ text ("Model: " ++ (toString model.canvas.mouse)) ]
 
 colourPaletteView model =
   let

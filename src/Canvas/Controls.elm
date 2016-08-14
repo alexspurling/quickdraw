@@ -56,7 +56,7 @@ lineWidthCircle colour size =
     [ version "1.1", x "0", y "0", viewBox "0 0 50 50" ]
     [ circle [fill (Colours.toHex colour), cx "25", cy "25", r (toString size)] [] ]
 
-pencilStyle index selected =
+lineWidthStyle index selected =
   let
     posAdjustment = if selected then 1 else 0
     left = 20 + (index % 10 * 30) - posAdjustment
@@ -73,12 +73,12 @@ pencilStyle index selected =
     , ("border-radius", borderRadius)
     ]
 
-pencilSize curColour curLineWidth index width =
+lineWidth curColour curLineWidth index width =
   let
     selected = width == curLineWidth
   in
     div
-      [ style (pencilStyle index selected), onClick (LineWidthSelected width) ] [ lineWidthCircle curColour width ]
+      [ style (lineWidthStyle index selected), onClick (LineWidthSelected width) ] [ lineWidthCircle curColour width ]
 
 eraserStyle =
   [ ("width", "25px")
@@ -113,7 +113,7 @@ colourPalette visible selectedDrawMode curColour curLineWidth =
   in
     div [ style divstyle ]
       ((List.indexedMap (colourPicker curColour) Colours.allColours) ++
-      (List.indexedMap (pencilSize curColour curLineWidth) [5, 10, 22]) ++
+      (List.indexedMap (lineWidth curColour curLineWidth) [5, 10, 22]) ++
       [ eraser
       , drawDrag selectedDrawMode]
       )
