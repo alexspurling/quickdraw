@@ -43,12 +43,14 @@ type Msg = CanvasMouseMoved MouseMovedEvent
   | CanvasMouseUp
   | ColourSelected Colour
   | Zoom ZoomAmount
-  | AnimationFrame Time
   | ToggleDrawMode
   | PencilSizeSelected Int
 
-update : Msg -> Model -> (Model, Cmd Msg, Maybe Line)
-update msg model =
+type AnimationMsg =
+  AnimationFrame Time
+
+updateAnimationFrame : AnimationMsg -> Model -> (Model, Cmd Msg, Maybe Line)
+updateAnimationFrame msg model =
   case msg of
     AnimationFrame delta ->
       if model.mouseDown then
@@ -63,11 +65,9 @@ update msg model =
             ({ model | pencil = pencil }, drawLineCmd, Maybe.Just lineToDraw)
       else
         (model, Cmd.none, Maybe.Nothing)
-    _ ->
-      (updateRest msg model, Cmd.none, Maybe.Nothing)
 
-updateRest : Msg -> Model -> Model
-updateRest msg model =
+update : Msg -> Model -> Model
+update msg model =
   case msg of
     CanvasMouseMoved event ->
       let
@@ -92,8 +92,6 @@ updateRest msg model =
         { model | drawMode = selectedDrawMode, selectedDrawMode = selectedDrawMode }
     PencilSizeSelected size ->
       {model | lineWidth = size}
-    AnimationFrame delta ->
-      Debug.crash "Should never get here"
 
 updatePencil : Pencil.Model -> Colour -> Int -> (Pencil.Model, Line, Cmd Msg)
 updatePencil pencil colour lineWidth =
@@ -108,15 +106,18 @@ updatePencil pencil colour lineWidth =
 
 -- SUBSCRIPTIONS
 
-subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions : Sub Msg
+subscriptions =
   Sub.batch
     [ canvasMouseMoved CanvasMouseMoved
     , canvasMouseDown CanvasMouseDown
     , canvasMouseUp (\_ -> CanvasMouseUp)
     , canvasZoom Zoom
-    , AnimationFrame.diffs AnimationFrame
     ]
+
+animationSubscription : Sub AnimationMsg
+animationSubscription =
+  AnimationFrame.diffs AnimationFrame
 
 -- VIEW
 
