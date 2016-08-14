@@ -50,7 +50,7 @@ port canvasMouseUp : ({} -> msg) -> Sub msg
 
 port canvasMouseDown : (Position -> msg) -> Sub msg
 
-port drawLine : (Line) -> Cmd msg
+port drawLine : (LineWithTile) -> Cmd msg
 
 port wheel : (WheelEvent -> msg) -> Sub msg
 

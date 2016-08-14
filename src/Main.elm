@@ -88,11 +88,12 @@ update msg model =
           case newCanvas.lineToDraw of
             Just line ->
               let
-                drawCmd = drawLine line
+                linesWithTiles = Canvas.getLineWithTiles
+                drawCmds = List.map drawLine (linesWithTiles line newCanvas.canvasView)
                 (phxSocket, phxCmd) = sendDraw model.phxSocket line
               in
                 { model | phxSocket = phxSocket, canvas = newCanvas }
-                ! [ drawCmd, phxCmd ]
+                ! (drawCmds ++ [phxCmd])
             Nothing ->
               if newCanvas.viewUpdated then
                 { model | canvas = newCanvas }
@@ -114,10 +115,10 @@ update msg model =
         )
     ReceiveChatMessage payload ->
       let
-        payloadDecoder = ("body" := lineDecoder)
+        payloadDecoder = ("body" := lineWithTileDecoder)
         drawLineCmd =
           case JD.decodeValue payloadDecoder payload of
-            Ok line -> drawLine line
+            Ok lineWithTile -> drawLine lineWithTile
             Err error ->
               let
                 _ = Debug.log "Failed to decode payload" error
@@ -131,6 +132,12 @@ update msg model =
       in
         (model, Cmd.none)
 
+encodeLineWithTile : LineWithTile -> JE.Value
+encodeLineWithTile lineWithTile =
+  object
+    [ ("line", encodeLine lineWithTile.line)
+    , ("tile", encodeTile lineWithTile.tile)
+    ]
 
 encodeLine : Line -> JE.Value
 encodeLine line =
@@ -149,6 +156,20 @@ encodePosition pos =
     , ("y", JE.int pos.y)
     ]
 
+encodeTile : Tile -> JE.Value
+encodeTile tile =
+  object
+    [ ("i", JE.int tile.i)
+    , ("j", JE.int tile.j)
+    ]
+
+
+lineWithTileDecoder : JD.Decoder LineWithTile
+lineWithTileDecoder =
+  object2 LineWithTile
+    ("line" := lineDecoder)
+    ("tile" := tileDecoder)
+
 lineDecoder : JD.Decoder Line
 lineDecoder =
   object5 Line
@@ -163,6 +184,12 @@ positionDecoder =
   object2 Position
     ("x" := JD.int)
     ("y" := JD.int)
+
+tileDecoder : JD.Decoder Tile
+tileDecoder =
+  object2 Tile
+    ("i" := JD.int)
+    ("j" := JD.int)
 
 sendDraw : Phoenix.Socket.Socket Msg -> Line -> (Phoenix.Socket.Socket Msg, Cmd Msg)
 sendDraw phxSocket line =

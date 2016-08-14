@@ -169,32 +169,12 @@ function getMousePos(canvas, touchEvent) {
 
 app.ports.drawLine.subscribe(drawLine);
 
-function drawLine(line) {
-
-  //We don't actually need the coordinates of the most recent mouse
-  //position other than to calculate the
-
-  var tileCurveFrom = tileAt(line.lastMid);
-  var tileCurveMid = tileAt(line.lineFrom);
-  var tileCurveTo = tileAt(line.lineMid); //We draw the curve up to the midpoint of the current line
-
-  //Loop through all the tiles that this line might pass through and draw on them
-  //Note that the line might not actually intersect all of the tiles in which
-  //case the line drawn will simply not be visible
-  var minI = Math.min(tileCurveFrom.i, tileCurveMid.i, tileCurveTo.i);
-  var maxI = Math.max(tileCurveFrom.i, tileCurveMid.i, tileCurveTo.i);
-  var minJ = Math.min(tileCurveFrom.j, tileCurveMid.j, tileCurveTo.j);
-  var maxJ = Math.max(tileCurveFrom.j, tileCurveMid.j, tileCurveTo.j);
-
-  for (var i = minI; i <= maxI; i++) {
-    for (var j = minJ; j <= maxJ; j++) {
-       drawLineOnTile(i, j, line.lastMid, line.lineFrom, line.lineMid, line.colour, line.width);
-       copyTileToCanvas(i, j);
-    }
-  }
+function drawLine(lineWithTile) {
+  drawLineOnTile(lineWithTile.tile.i, lineWithTile.tile.j, lineWithTile.line);
+  copyTileToCanvas(lineWithTile.tile.i, lineWithTile.tile.j);
 }
 
-function drawLineOnTile(i, j, lastMid, lineFrom, lineMid, colour, width) {
+function drawLineOnTile(i, j, line) {
 
   var tile = tileMap[i][j];
 
@@ -204,13 +184,13 @@ function drawLineOnTile(i, j, lastMid, lineFrom, lineMid, colour, width) {
   //mouse position but we get nice smooth curves between mouse positions
   //Algorithm was taken from: https://github.com/Leimi/drawingboard.js
 
-  var curveFromTilePos = posOnTile(lastMid, i, j);
+  var curveFromTilePos = posOnTile(line.lastMid, i, j);
   //Note the curve mid is not the same as the line mid see above
-  var curveMidTilePos = posOnTile(lineFrom, i, j);
-  var curveToTilePos = posOnTile(lineMid, i, j);
+  var curveMidTilePos = posOnTile(line.lineFrom, i, j);
+  var curveToTilePos = posOnTile(line.lineMid, i, j);
 
-  tile.strokeStyle = colour;
-  tile.lineWidth = width;
+  tile.strokeStyle = line.colour;
+  tile.lineWidth = line.width;
   tile.beginPath();
   tile.moveTo(curveFromTilePos.x, curveFromTilePos.y);
   tile.quadraticCurveTo(curveMidTilePos.x, curveMidTilePos.y, curveToTilePos.x, curveToTilePos.y);
