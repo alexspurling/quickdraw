@@ -38,6 +38,4 @@ port drawLine : (Line) -> Cmd msg
 
 port wheel : (WheelEvent -> msg) -> Sub msg
 
-port moveCanvas : Position -> Cmd msg
-
-port zoomCanvas : CanvasState -> Cmd msg
+port updateCanvas : CanvasState -> Cmd msg

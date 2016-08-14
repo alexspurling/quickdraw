@@ -199,7 +199,7 @@ view : Model -> Html Msg
 view model =
   div [ ]
     [ colourPaletteView model
-    , canvas [ id "mycanvas", class (canvasClass model.canvas.drawMode model.canvas.drag.dragging) ] []
+    , canvas [ id "mycanvas", class (canvasClass model.canvas.drawMode model.canvas.mouseDown) ] []
     , debugDiv model
     ]
 

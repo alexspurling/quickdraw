@@ -295,9 +295,9 @@ function visibleTiles(func) {
   }
 }
 
-app.ports.zoomCanvas.subscribe(zoomCanvas);
+app.ports.updateCanvas.subscribe(updateCanvas);
 
-function zoomCanvas(canvasState) {
+function updateCanvas(canvasState) {
   zoom = canvasState.zoom;
   scale = canvasState.scale;
   curX = canvasState.curPos.x;
@@ -317,17 +317,4 @@ function debug(debugStr) {
   }
   debugDiv.innerHTML = debugStr;
   debugDiv.innerText = debugStr;
-}
-
-app.ports.moveCanvas.subscribe(moveCanvas);
-
-function moveCanvas(dragVec) {
-  var scaledDragVec = multiply(dragVec, scale);
-  var curPos = minus(gridPosDragStart, scaledDragVec);
-  if (curPos.x != curX || curPos.y != curY) {
-    curX = curPos.x;
-    curY = curPos.y;
-    createTiles();
-    copyFromTileMap();
-  }
 }

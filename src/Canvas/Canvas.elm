@@ -6,7 +6,6 @@ import Element
 import Time exposing (Time)
 
 import Canvas.Ports exposing (..)
-import Canvas.Drag as Drag
 import Canvas.Mouse as Mouse
 import Canvas.Colours as Colours exposing (Colour)
 import Canvas.Vector as Vector exposing (Position)
@@ -20,9 +19,10 @@ type alias Model =
   , zoom : Int
   , scale : Float
   , curPos : Position
+  , mousePosDragStart : Position
+  , gridPosDragStart : Position
   , drawMode : Bool
   , selectedDrawMode : Bool
-  , drag : Drag.Model
   , lineWidth : Int
   , viewUpdated : Bool --A flag to tell whether or not to render the view for a given animation frame
   }
@@ -35,9 +35,10 @@ init =
   , zoom = 0
   , scale = 1
   , curPos = Position 0 0
+  , mousePosDragStart = Position 0 0
+  , gridPosDragStart = Position 0 0
   , drawMode = True
   , selectedDrawMode = True
-  , drag = Drag.init
   , lineWidth = 10
   , viewUpdated = False
   }
@@ -61,43 +62,27 @@ updateAnimationFrame : AnimationMsg -> Model -> (Model, Cmd Msg, Maybe Line)
 updateAnimationFrame msg model =
   case msg of
     AnimationFrame delta ->
-      if model.mouseDown then
-        if (not model.drawMode) && model.drag.dragging then
-          --Adjust cur pos
-          (model, moveCanvas (Drag.dragTo model.mouse.curMousePos model.drag), Maybe.Nothing)
-        else
-          --Or draw line on canvas
-          let
-            lineToDraw = (Mouse.getLine model.mouse (Colours.toHex model.curColour) model.lineWidth)
-            drawLineCmd = drawLine lineToDraw
-            newMouse = Mouse.update (Mouse.UpdatePrevPositions lineToDraw.lineMid) model.mouse
-          in
-            ({ model | mouse = newMouse }, drawLineCmd, Maybe.Just lineToDraw)
-      else
+      if model.mouseDown && model.drawMode then
+        updateLineDraw model
+      else if model.viewUpdated then
+        --The view was updated since the last frame so send a cmd to update it in JS
         let
-          cmd =
-            if model.viewUpdated then
-              --TODO update curPos when dragging
-              Cmd.batch
-                [ zoomCanvas (CanvasState model.zoom model.scale model.curPos)
-                ]
-            else
-              Cmd.none
+          cmd = updateCanvas (CanvasState model.zoom model.scale model.curPos)
         in
           ({ model | viewUpdated = False}, cmd, Maybe.Nothing)
+      else
+        (model, Cmd.none, Maybe.Nothing)
+
 
 update : Msg -> Model -> Model
 update msg model =
   case msg of
     CanvasMouseMoved event ->
-      let
-        newMouse = Mouse.update (Mouse.CanvasMouseMoved event) model.mouse
-      in
-        { model | mouse = newMouse, mouseDown = event.mouseDown }
+      model |> updateMouse event |> updateDrag event.mousePos
     CanvasMouseDown mousePos ->
-      { model | mouseDown = True, drag = Drag.dragStart model.drag mousePos }
+      { model | mouseDown = True, mousePosDragStart = mousePos, gridPosDragStart = model.curPos }
     CanvasMouseUp ->
-      { model | mouseDown = False, drag = Drag.dragStop model.drag }
+      { model | mouseDown = False }
     ColourSelected colour ->
       { model | curColour = colour }
     Wheel wheelEvent ->
@@ -109,6 +94,41 @@ update msg model =
         { model | drawMode = selectedDrawMode, selectedDrawMode = selectedDrawMode }
     LineWidthSelected width ->
       {model | lineWidth = width}
+
+
+updateLineDraw : Model -> (Model, Cmd Msg, Maybe Line)
+updateLineDraw model =
+  --Calculate the line to draw based on last calculated state
+  --Update the model with the calculated state for this frame
+  --Send a command to draw it on the canvas
+  --Pass the line up to the parent to send to other clients
+  let
+    lineToDraw = (Mouse.getLine model.mouse (Colours.toHex model.curColour) model.lineWidth)
+    drawLineCmd = drawLine lineToDraw
+    newMouse = Mouse.update (Mouse.UpdatePrevPositions lineToDraw.lineMid) model.mouse
+  in
+    ({ model | mouse = newMouse }, drawLineCmd, Maybe.Just lineToDraw)
+
+
+updateMouse : MouseMovedEvent -> Model -> Model
+updateMouse event model =
+  let
+    newMouse = Mouse.update (Mouse.CanvasMouseMoved event) model.mouse
+  in
+    { model | mouse = newMouse, mouseDown = event.mouseDown }
+
+
+updateDrag : Position -> Model -> Model
+updateDrag mousePos model =
+  if (not model.drawMode) && model.mouseDown then
+    let
+      dragVec = Vector.minus mousePos model.mousePosDragStart
+      scaledDragVec = Vector.multiply dragVec model.scale
+      curPos = Vector.minus model.gridPosDragStart scaledDragVec
+    in
+      { model | curPos = curPos, viewUpdated = True }
+  else
+    model
 
 
 updateZoom : Model -> Int -> Position -> Model
@@ -128,7 +148,6 @@ updateZoom model delta mousePos =
     drawMode = model.selectedDrawMode && (zoom <= 500)
   in
     { model | zoom = zoom, scale = scale, curPos = curPos, drawMode = drawMode, viewUpdated = True }
-
 
 -- SUBSCRIPTIONS
 
