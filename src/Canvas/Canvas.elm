@@ -16,15 +16,13 @@ type alias Model =
   { mouse : Mouse.Model
   , mouseDown : Bool
   , curColour : Colour
-  , zoom : Int
-  , scale : Float
-  , curPos : Position
+  , canvasView : CanvasView
+  , viewUpdated : Bool --A flag to tell whether or not to render the view for a given animation frame
   , mousePosDragStart : Position
   , gridPosDragStart : Position
   , drawMode : Bool
   , selectedDrawMode : Bool
   , lineWidth : Int
-  , viewUpdated : Bool --A flag to tell whether or not to render the view for a given animation frame
   }
 
 init : (Model, Cmd Msg)
@@ -32,15 +30,13 @@ init =
   ( { mouse = Mouse.init
   , mouseDown = False
   , curColour = Colours.Black
-  , zoom = 0
-  , scale = 1
-  , curPos = Position 0 0
+  , canvasView = CanvasView (CanvasSize 800 600) 0 1 (Position 0 0)
+  , viewUpdated = False
   , mousePosDragStart = Position 0 0
   , gridPosDragStart = Position 0 0
   , drawMode = True
   , selectedDrawMode = True
   , lineWidth = 10
-  , viewUpdated = False
   }
   , loadCanvas () )
 
@@ -50,8 +46,9 @@ init =
 type Msg = CanvasMouseMoved MouseMovedEvent
   | CanvasMouseDown Position
   | CanvasMouseUp
-  | ColourSelected Colour
   | Wheel WheelEvent
+  | CanvasResized CanvasSize
+  | ColourSelected Colour
   | ToggleDrawMode
   | LineWidthSelected Int
 
@@ -67,7 +64,7 @@ updateAnimationFrame msg model =
       else if model.viewUpdated then
         --The view was updated since the last frame so send a cmd to update it in JS
         let
-          cmd = updateCanvas (CanvasState model.zoom model.scale model.curPos)
+          cmd = updateCanvas model.canvasView
         in
           ({ model | viewUpdated = False}, cmd, Maybe.Nothing)
       else
@@ -80,11 +77,13 @@ update msg model =
     CanvasMouseMoved event ->
       model |> updateMouse event |> updateDrag event.mousePos
     CanvasMouseDown mousePos ->
-      { model | mouseDown = True, mousePosDragStart = mousePos, gridPosDragStart = model.curPos }
+      { model | mouseDown = True, mousePosDragStart = mousePos, gridPosDragStart = model.canvasView.curPos }
     CanvasMouseUp ->
       { model | mouseDown = False }
     ColourSelected colour ->
       { model | curColour = colour }
+    CanvasResized canvasSize ->
+      updateCanvasSize model canvasSize
     Wheel wheelEvent ->
       updateZoom model wheelEvent.delta wheelEvent.mousePos
     ToggleDrawMode ->
@@ -123,10 +122,14 @@ updateDrag mousePos model =
   if (not model.drawMode) && model.mouseDown then
     let
       dragVec = Vector.minus mousePos model.mousePosDragStart
-      scaledDragVec = Vector.multiply dragVec model.scale
+      scaledDragVec = Vector.multiply dragVec model.canvasView.scale
       curPos = Vector.minus model.gridPosDragStart scaledDragVec
+
+      --This could be done by nested update but the current version of the Elm IntelliJ plugin doesn't like it
+      curCanvasView = model.canvasView
+      newCanvasView = { curCanvasView | curPos = curPos }
     in
-      { model | curPos = curPos, viewUpdated = True }
+      { model | canvasView = newCanvasView, viewUpdated = True }
   else
     model
 
@@ -136,9 +139,9 @@ updateZoom model delta mousePos =
   let
     --Get the point on the canvas around which we want to scale
     --This point should remain fixed as scale changes
-    scaledCanvasPos = Vector.plus (Vector.multiply mousePos model.scale) model.curPos
+    scaledCanvasPos = Vector.plus (Vector.multiply mousePos model.canvasView.scale) model.canvasView.curPos
 
-    zoom = clamp 0 3000 (model.zoom + delta)
+    zoom = clamp 0 3000 (model.canvasView.zoom + delta)
     scale = 2 ^ (zoom / 1000)
 
     --Adjust the current grid position so that the previous
@@ -146,8 +149,19 @@ updateZoom model delta mousePos =
     curPos = Vector.minus scaledCanvasPos (Vector.multiply mousePos scale)
 
     drawMode = model.selectedDrawMode && (zoom <= 500)
+
+    curCanvasView = model.canvasView
+    newCanvasView = { curCanvasView | zoom = zoom, scale = scale, curPos = curPos }
   in
-    { model | zoom = zoom, scale = scale, curPos = curPos, drawMode = drawMode, viewUpdated = True }
+    { model | canvasView = newCanvasView, drawMode = drawMode, viewUpdated = True }
+
+updateCanvasSize : Model -> CanvasSize -> Model
+updateCanvasSize model canvasSize =
+  let
+    curCanvasView = model.canvasView
+    newCanvasView = { curCanvasView | size = canvasSize }
+  in
+    { model | canvasView = newCanvasView, viewUpdated = True }
 
 -- SUBSCRIPTIONS
 
@@ -158,6 +172,7 @@ subscriptions =
     , canvasMouseDown CanvasMouseDown
     , canvasMouseUp (\_ -> CanvasMouseUp)
     , wheel Wheel
+    , canvasResized CanvasResized
     ]
 
 animationSubscription : Sub AnimationMsg

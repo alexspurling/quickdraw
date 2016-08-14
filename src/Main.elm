@@ -193,7 +193,7 @@ colourPaletteView model =
         Controls.ToggleDrawMode ->
           CanvasMsg (Canvas.ToggleDrawMode)
   in
-    App.map controlToCanvas (Controls.colourPalette (model.canvas.zoom <= 500) model.canvas.selectedDrawMode model.canvas.curColour model.canvas.lineWidth)
+    App.map controlToCanvas (Controls.colourPalette (model.canvas.canvasView.zoom <= 500) model.canvas.selectedDrawMode model.canvas.curColour model.canvas.lineWidth)
 
 view : Model -> Html Msg
 view model =

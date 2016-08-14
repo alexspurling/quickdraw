@@ -20,10 +20,16 @@ type alias WheelEvent =
   , mousePos : Position
   }
 
-type alias CanvasState =
-  { zoom : Int
+type alias CanvasView =
+  { size : CanvasSize
+  , zoom : Int
   , scale : Float
   , curPos : Position
+  }
+
+type alias CanvasSize =
+  { width : Int
+  , height : Int
   }
 
 port loadCanvas : () -> Cmd msg
@@ -38,4 +44,6 @@ port drawLine : (Line) -> Cmd msg
 
 port wheel : (WheelEvent -> msg) -> Sub msg
 
-port updateCanvas : CanvasState -> Cmd msg
+port updateCanvas : CanvasView -> Cmd msg
+
+port canvasResized : (CanvasSize -> msg) -> Sub msg

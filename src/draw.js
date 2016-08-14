@@ -22,12 +22,13 @@ app.ports.loadCanvas.subscribe(function() {
 
   tileMap = {};
 
-  resizeCanvas(canvas);
+  console.log("Loading canvas", canvas);
+
   //Resize on window resize
   window.onresize = function() {
-    resizeCanvas(canvas);
+    app.ports.canvasResized.send({width:window.innerWidth, height:window.innerHeight});
   };
-  console.log("Loading canvas", canvas);
+  window.onresize();
 
   canvas.addEventListener("mousemove", function (e) {
       var mousePos = {x: e.offsetX, y: e.offsetY};
@@ -115,22 +116,6 @@ app.ports.loadCanvas.subscribe(function() {
       }
   }, false);
 });
-
-function resizeCanvas(canvas) {
-
-  //Initialise new buffer canvases if necessary
-  var canvasWidth = window.innerWidth;
-  var canvasHeight = window.innerHeight;
-
-  // resize & clear the original canvas and copy back in pixel data from the buffer //
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-
-  createTiles();
-
-  //Copy the tile map to the canvas
-  copyFromTileMap();
-}
 
 function createTiles() {
   visibleTiles(function(i, j) {
@@ -297,11 +282,13 @@ function visibleTiles(func) {
 
 app.ports.updateCanvas.subscribe(updateCanvas);
 
-function updateCanvas(canvasState) {
-  zoom = canvasState.zoom;
-  scale = canvasState.scale;
-  curX = canvasState.curPos.x;
-  curY = canvasState.curPos.y;
+function updateCanvas(canvasView) {
+  zoom = canvasView.zoom;
+  scale = canvasView.scale;
+  curX = canvasView.curPos.x;
+  curY = canvasView.curPos.y;
+  canvas.width = canvasView.size.width;
+  canvas.height = canvasView.size.height;
   createTiles();
   copyFromTileMap();
 }
