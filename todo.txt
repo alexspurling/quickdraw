@@ -1,5 +1,4 @@
 
-- allow different pencil widths
 - allow drawing without moving mouse
 
 - server side
@@ -7,6 +6,8 @@
   - do not broadcast draw messages to the current user
 
 DONE
+
++ allow different pencil widths
 + allow erase (white colour?)
 + display the correct cursor on both chrome and firefox
 

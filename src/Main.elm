@@ -32,6 +32,7 @@ type Msg =
   CanvasMsg Canvas.Msg
   | PhoenixMsg (Phoenix.Socket.Msg Msg)
   | ReceiveChatMessage JE.Value
+  | JoinedChannel JE.Value
 
 -- INIT
 
@@ -53,11 +54,13 @@ initPhoenix =
 
 socketServer : String
 socketServer =
-  "ws://localhost:4000/socket/websocket?username=quickdraw"
+  "ws://localhost:4000/socket/websocket"
 
 initPhxSocket : Phoenix.Socket.Socket Msg
 initPhxSocket =
   Phoenix.Socket.init socketServer
+    |> Phoenix.Socket.withDebug
+    |> Phoenix.Socket.on "join" "room:lobby" JoinedChannel
     |> Phoenix.Socket.on "new:msg" "room:lobby" ReceiveChatMessage
 
 joinChannel : Phoenix.Socket.Socket Msg -> (Phoenix.Socket.Socket Msg, Cmd Msg)
@@ -110,6 +113,11 @@ update msg model =
                 Cmd.none
       in
         (model, drawLineCmd)
+    JoinedChannel payload ->
+      let
+        _ = Debug.log "I joined a channel" payload
+      in
+        (model, Cmd.none)
 
 
 encodeLine : Line -> JE.Value
