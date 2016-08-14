@@ -1,4 +1,4 @@
-module Canvas.Pencil exposing (..)
+module Canvas.Mouse exposing (..)
 
 import Mouse exposing (Position)
 

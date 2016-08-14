@@ -8,13 +8,13 @@ import Time exposing (Time)
 
 import Canvas.Ports exposing (..)
 import Canvas.Drag as Drag
-import Canvas.Pencil as Pencil
+import Canvas.Mouse as Mouse
 import Canvas.Colours as Colours exposing (Colour)
 
 -- MODEL
 
 type alias Model =
-  { pencil : Pencil.Model
+  { pencil : Mouse.Model
   , mouseDown : Bool
   , curColour : Colour
   , zoom : Int
@@ -26,7 +26,7 @@ type alias Model =
 
 init : (Model, Cmd Msg)
 init =
-  ( { pencil = Pencil.init
+  ( { pencil = Mouse.init
   , mouseDown = False
   , curColour = Colours.Black
   , zoom = 0
@@ -71,7 +71,7 @@ update msg model =
   case msg of
     CanvasMouseMoved event ->
       let
-        newPencil = Pencil.update (Pencil.CanvasMouseMoved event) model.pencil
+        newPencil = Mouse.update (Mouse.CanvasMouseMoved event) model.pencil
       in
         { model | pencil = newPencil, mouseDown = event.mouseDown }
     CanvasMouseDown mousePos ->
@@ -93,12 +93,12 @@ update msg model =
     PencilSizeSelected size ->
       {model | lineWidth = size}
 
-updatePencil : Pencil.Model -> Colour -> Int -> (Pencil.Model, Line, Cmd Msg)
+updatePencil : Mouse.Model -> Colour -> Int -> (Mouse.Model, Line, Cmd Msg)
 updatePencil pencil colour lineWidth =
   let
-    lineToDraw = (Pencil.getLine pencil (Colours.toHex colour) lineWidth)
+    lineToDraw = (Mouse.getLine pencil (Colours.toHex colour) lineWidth)
     drawLineCmd = drawLine lineToDraw
-    newPencil = Pencil.update (Pencil.UpdatePrevPositions lineToDraw.lineMid) pencil
+    newPencil = Mouse.update (Mouse.UpdatePrevPositions lineToDraw.lineMid) pencil
   in
     (newPencil, lineToDraw, drawLineCmd)
 
