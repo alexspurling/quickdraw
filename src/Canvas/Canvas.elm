@@ -1,6 +1,5 @@
 module Canvas.Canvas exposing (..)
 
-import AnimationFrame
 import Collage
 import Element
 import Time exposing (Time)
@@ -17,6 +16,7 @@ type alias Model =
   , mouseDown : Bool
   , curColour : Colour
   , canvasView : CanvasView
+  , lineToDraw : Maybe Line
   , viewUpdated : Bool --A flag to tell whether or not to render the view for a given animation frame
   , mousePosDragStart : Position
   , gridPosDragStart : Position
@@ -31,6 +31,7 @@ init =
   , mouseDown = False
   , curColour = Colours.Black
   , canvasView = CanvasView (CanvasSize 800 600) 0 1 (Position 0 0)
+  , lineToDraw = Maybe.Nothing
   , viewUpdated = False
   , mousePosDragStart = Position 0 0
   , gridPosDragStart = Position 0 0
@@ -40,6 +41,7 @@ init =
   }
   , loadCanvas () )
 
+tileSize = 400
 
 -- UPDATE
 
@@ -52,23 +54,12 @@ type Msg = CanvasMouseMoved MouseMovedEvent
   | ToggleDrawMode
   | LineWidthSelected Int
 
-type AnimationMsg =
-  AnimationFrame Time
-
-updateAnimationFrame : AnimationMsg -> Model -> (Model, Cmd Msg, Maybe Line)
-updateAnimationFrame msg model =
-  case msg of
-    AnimationFrame delta ->
-      if model.mouseDown && model.drawMode then
-        updateLineDraw model
-      else if model.viewUpdated then
-        --The view was updated since the last frame so send a cmd to update it in JS
-        let
-          cmd = updateCanvas model.canvasView
-        in
-          ({ model | viewUpdated = False}, cmd, Maybe.Nothing)
-      else
-        (model, Cmd.none, Maybe.Nothing)
+updateAnimationFrame : Model -> Model
+updateAnimationFrame model =
+  if model.mouseDown && model.drawMode then
+    updateLineToDraw model
+  else
+    { model | lineToDraw = Maybe.Nothing }
 
 
 update : Msg -> Model -> Model
@@ -95,18 +86,17 @@ update msg model =
       {model | lineWidth = width}
 
 
-updateLineDraw : Model -> (Model, Cmd Msg, Maybe Line)
-updateLineDraw model =
+updateLineToDraw : Model -> Model
+updateLineToDraw model =
   --Calculate the line to draw based on last calculated state
   --Update the model with the calculated state for this frame
   --Send a command to draw it on the canvas
   --Pass the line up to the parent to send to other clients
   let
     lineToDraw = (Mouse.getLine model.mouse (Colours.toHex model.curColour) model.lineWidth)
-    drawLineCmd = drawLine lineToDraw
     newMouse = Mouse.update (Mouse.UpdatePrevPositions lineToDraw.lineMid) model.mouse
   in
-    ({ model | mouse = newMouse }, drawLineCmd, Maybe.Just lineToDraw)
+    { model | mouse = newMouse, lineToDraw = Maybe.Just lineToDraw }
 
 
 updateMouse : MouseMovedEvent -> Model -> Model
@@ -139,7 +129,7 @@ updateZoom model delta mousePos =
   let
     --Get the point on the canvas around which we want to scale
     --This point should remain fixed as scale changes
-    scaledCanvasPos = Vector.plus (Vector.multiply mousePos model.canvasView.scale) model.canvasView.curPos
+    scaledCanvasPos = getScaledPos model.canvasView mousePos
 
     zoom = clamp 0 3000 (model.canvasView.zoom + delta)
     scale = 2 ^ (zoom / 1000)
@@ -163,6 +153,59 @@ updateCanvasSize model canvasSize =
   in
     { model | canvasView = newCanvasView, viewUpdated = True }
 
+--Returns a command batch representing lines to draw on tiles
+--the batch might contain more than one line/tile to draw if
+--the line crosses a tile boundary
+getLineWithTiles : Line -> CanvasView -> List LineWithTile
+getLineWithTiles lineToDraw canvasView =
+  getTilesForLine lineToDraw canvasView |> List.map (\tile -> LineWithTile lineToDraw tile)
+
+
+--Returns the set of tiles that a line might have crossed
+getTilesForLine : Line -> CanvasView -> List Tile
+getTilesForLine line canvasView =
+  let
+    tileCurveFrom = tileAt canvasView line.lastMid
+    tileCurveMid = tileAt canvasView line.lineFrom
+    tileCurveTo = tileAt canvasView line.lineMid --We only draw the curve up to the midpoint of the current line
+
+    --Loop through all the tiles that this line might pass through and draw on them
+    --Note that the line might not actually intersect all of the tiles in which
+    --case the line drawn will simply not be visible
+    minI = min3 tileCurveFrom.i tileCurveMid.i tileCurveTo.i
+    maxI = max3 tileCurveFrom.i tileCurveMid.i tileCurveTo.i
+    minJ = min3 tileCurveFrom.j tileCurveMid.j tileCurveTo.j
+    maxJ = max3 tileCurveFrom.j tileCurveMid.j tileCurveTo.j
+
+    rangeI = [minI..maxI]
+    rangeJ = [minJ..maxJ]
+
+    createTilesWithI js i =
+      List.map (Tile i) js
+  in
+    List.concatMap (createTilesWithI rangeJ) rangeI
+
+tileAt : CanvasView -> Position -> Tile
+tileAt canvasView pos =
+  let
+    scaledCanvasPos = getScaledPos canvasView pos
+    i = floor(toFloat (scaledCanvasPos.x) / toFloat(tileSize))
+    j = floor(toFloat (scaledCanvasPos.y) / toFloat(tileSize))
+  in
+    Tile i j
+
+getScaledPos : CanvasView -> Position -> Position
+getScaledPos canvasView pos =
+  Vector.plus (Vector.multiply pos canvasView.scale) canvasView.curPos
+
+min3 : comparable -> comparable -> comparable -> comparable
+min3 a b c =
+  min a (min b c)
+
+max3 : comparable -> comparable -> comparable -> comparable
+max3 a b c =
+  max a (max b c)
+
 -- SUBSCRIPTIONS
 
 subscriptions : Sub Msg
@@ -174,10 +217,6 @@ subscriptions =
     , wheel Wheel
     , canvasResized CanvasResized
     ]
-
-animationSubscription : Sub AnimationMsg
-animationSubscription =
-  AnimationFrame.diffs AnimationFrame
 
 -- VIEW
 

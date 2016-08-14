@@ -1,5 +1,6 @@
 module Main exposing (..)
 
+import AnimationFrame
 import Html.App as App
 import Html exposing (Html, div, text, canvas)
 import Html.Attributes exposing (id, style, class)
@@ -27,7 +28,7 @@ type alias Model =
   }
 
 type Msg =
-  AnimationFrame Canvas.AnimationMsg
+  AnimationFrame Time
   | CanvasMsg Canvas.Msg
   | PhoenixMsg (Phoenix.Socket.Msg Msg)
   | ReceiveChatMessage JE.Value
@@ -78,19 +79,29 @@ joinChannel phxSocket =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    AnimationFrame animationMsg ->
+    AnimationFrame delta ->
       let
-        (newCanvas, canvasCmd, lineToDraw) = Canvas.updateAnimationFrame animationMsg model.canvas
-        --If this updated produced a line, then create a phxCmd to send
-        --the line to the server
-        (phxSocket, phxCmd) =
-          case lineToDraw of
+        newCanvas = Canvas.updateAnimationFrame model.canvas
+        --If this updated produced a line, then create commands to draw
+        --the line on the local canvas and remote clients
+        (newModel, cmd) =
+          case newCanvas.lineToDraw of
             Just line ->
-              sendDraw model.phxSocket line
+              let
+                drawCmd = drawLine line
+                (phxSocket, phxCmd) = sendDraw model.phxSocket line
+              in
+                { model | phxSocket = phxSocket, canvas = newCanvas }
+                ! [ drawCmd, phxCmd ]
             Nothing ->
-              (model.phxSocket, Cmd.none)
+              if newCanvas.viewUpdated then
+                { model | canvas = newCanvas }
+                ! [ updateCanvas newCanvas.canvasView ]
+              else
+                (model, Cmd.none)
+
       in
-        {model | canvas = newCanvas} ! [Cmd.map CanvasMsg canvasCmd, phxCmd]
+        (newModel, cmd)
     CanvasMsg canvasMsg ->
         {model | canvas = Canvas.update canvasMsg model.canvas} ! []
     PhoenixMsg msg ->
@@ -158,7 +169,6 @@ sendDraw phxSocket line =
   let
     payload =
       (JE.object [ ( "body", encodeLine line ) ])
-
     push' =
       Phoenix.Push.init "new:msg" "room:lobby"
         |> Phoenix.Push.withPayload payload
@@ -210,5 +220,5 @@ subscriptions model =
   Sub.batch
     [ Phoenix.Socket.listen model.phxSocket PhoenixMsg
     , Sub.map CanvasMsg (Canvas.subscriptions)
-    , Sub.map AnimationFrame (Canvas.animationSubscription)
+    , AnimationFrame.diffs AnimationFrame
     ]

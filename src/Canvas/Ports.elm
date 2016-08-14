@@ -32,6 +32,16 @@ type alias CanvasSize =
   , height : Int
   }
 
+type alias Tile =
+  { i : Int
+  , j : Int
+  }
+
+type alias LineWithTile =
+  { line : Line
+  , tile : Tile
+  }
+
 port loadCanvas : () -> Cmd msg
 
 port canvasMouseMoved : (MouseMovedEvent -> msg) -> Sub msg
