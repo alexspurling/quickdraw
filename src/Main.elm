@@ -96,7 +96,7 @@ update msg model =
                 ! (drawCmds ++ [phxCmd])
             Nothing ->
               if newCanvas.viewUpdated then
-                { model | canvas = newCanvas }
+                { model | canvas = { newCanvas | viewUpdated = False } }
                 ! [ updateCanvas newCanvas.canvasView ]
               else
                 (model, Cmd.none)
