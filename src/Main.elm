@@ -88,9 +88,9 @@ update msg model =
           case newCanvas.lineToDraw of
             Just line ->
               let
-                linesWithTiles = Canvas.getLineWithTiles
-                drawCmds = List.map drawLine (linesWithTiles line newCanvas.canvasView)
-                (phxSocket, phxCmd) = sendDraw model.phxSocket line
+                linesWithTiles = Canvas.getLineWithTiles line newCanvas.canvasView
+                drawCmds = List.map drawLine linesWithTiles
+                (phxSocket, phxCmd) = sendDraw model.phxSocket linesWithTiles
               in
                 { model | phxSocket = phxSocket, canvas = newCanvas }
                 ! (drawCmds ++ [phxCmd])
@@ -115,24 +115,29 @@ update msg model =
         )
     ReceiveChatMessage payload ->
       let
-        payloadDecoder = ("body" := lineWithTileDecoder)
+        payloadDecoder = ("body" := linesOnTilesDecoder)
         drawLineCmd =
           case JD.decodeValue payloadDecoder payload of
-            Ok lineWithTile -> drawLine lineWithTile
+            Ok linesWithTiles ->
+              List.map drawLine linesWithTiles
             Err error ->
               let
                 _ = Debug.log "Failed to decode payload" error
               in
-                Cmd.none
+                []
       in
-        (model, drawLineCmd)
+        model ! drawLineCmd
     JoinedChannel payload ->
       let
         _ = Debug.log "I joined a channel" payload
       in
         (model, Cmd.none)
 
-encodeLineWithTile : LineWithTile -> JE.Value
+encodeLineOnTiles : List LineOnTile -> JE.Value
+encodeLineOnTiles lineOnTiles =
+  JE.list (List.map encodeLineWithTile lineOnTiles)
+
+encodeLineWithTile : LineOnTile -> JE.Value
 encodeLineWithTile lineWithTile =
   object
     [ ("line", encodeLine lineWithTile.line)
@@ -163,10 +168,14 @@ encodeTile tile =
     , ("j", JE.int tile.j)
     ]
 
+linesOnTilesDecoder : JD.Decoder (List LineOnTile)
+linesOnTilesDecoder =
+  JD.list lineWithTileDecoder
 
-lineWithTileDecoder : JD.Decoder LineWithTile
+
+lineWithTileDecoder : JD.Decoder LineOnTile
 lineWithTileDecoder =
-  object2 LineWithTile
+  object2 LineOnTile
     ("line" := lineDecoder)
     ("tile" := tileDecoder)
 
@@ -191,11 +200,11 @@ tileDecoder =
     ("i" := JD.int)
     ("j" := JD.int)
 
-sendDraw : Phoenix.Socket.Socket Msg -> Line -> (Phoenix.Socket.Socket Msg, Cmd Msg)
-sendDraw phxSocket line =
+sendDraw : Phoenix.Socket.Socket Msg -> List LineOnTile -> (Phoenix.Socket.Socket Msg, Cmd Msg)
+sendDraw phxSocket lineOnTiles =
   let
     payload =
-      (JE.object [ ( "body", encodeLine line ) ])
+      (JE.object [ ( "body", encodeLineOnTiles lineOnTiles ) ])
     push' =
       Phoenix.Push.init "new:msg" "room:lobby"
         |> Phoenix.Push.withPayload payload

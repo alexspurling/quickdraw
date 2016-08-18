@@ -170,12 +170,16 @@ function getMousePos(canvas, touchEvent) {
 app.ports.drawLine.subscribe(drawLine);
 
 function drawLine(lineWithTile) {
+  var i = lineWithTile.tile.i;
+  var j = lineWithTile.tile.j;
+  if(typeof tileMap[i] === 'undefined' || typeof tileMap[i][j] === 'undefined') {
+      return;
+  }
   drawLineOnTile(lineWithTile.tile.i, lineWithTile.tile.j, lineWithTile.line);
   copyTileToCanvas(lineWithTile.tile.i, lineWithTile.tile.j);
 }
 
 function drawLineOnTile(i, j, line) {
-
   var tile = tileMap[i][j];
 
   //Instead of doing simple straight lines between points A, B and C, we find the
@@ -183,17 +187,11 @@ function drawLineOnTile(i, j, line) {
   //curve between these two points. This means we never reach as far as the current
   //mouse position but we get nice smooth curves between mouse positions
   //Algorithm was taken from: https://github.com/Leimi/drawingboard.js
-
-  var curveFromTilePos = posOnTile(line.lastMid, i, j);
-  //Note the curve mid is not the same as the line mid see above
-  var curveMidTilePos = posOnTile(line.lineFrom, i, j);
-  var curveToTilePos = posOnTile(line.lineMid, i, j);
-
   tile.strokeStyle = line.colour;
   tile.lineWidth = line.width;
   tile.beginPath();
-  tile.moveTo(curveFromTilePos.x, curveFromTilePos.y);
-  tile.quadraticCurveTo(curveMidTilePos.x, curveMidTilePos.y, curveToTilePos.x, curveToTilePos.y);
+  tile.moveTo(line.lastMid.x, line.lastMid.y);
+  tile.quadraticCurveTo(line.lineFrom.x, line.lineFrom.y, line.lineMid.x, line.lineMid.y);
   tile.stroke();
   tile.closePath();
 }

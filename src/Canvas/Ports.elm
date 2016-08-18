@@ -37,7 +37,7 @@ type alias Tile =
   , j : Int
   }
 
-type alias LineWithTile =
+type alias LineOnTile =
   { line : Line
   , tile : Tile
   }
@@ -50,7 +50,7 @@ port canvasMouseUp : ({} -> msg) -> Sub msg
 
 port canvasMouseDown : (Position -> msg) -> Sub msg
 
-port drawLine : (LineWithTile) -> Cmd msg
+port drawLine : (LineOnTile) -> Cmd msg
 
 port wheel : (WheelEvent -> msg) -> Sub msg
 

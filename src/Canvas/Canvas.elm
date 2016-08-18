@@ -153,12 +153,30 @@ updateCanvasSize model canvasSize =
   in
     { model | canvasView = newCanvasView, viewUpdated = True }
 
+getLineOnTile : CanvasView -> Line -> Tile -> LineOnTile
+getLineOnTile canvasView line tile =
+  let
+    lastMid = getPosOnTile canvasView line.lastMid tile
+    lineFrom = getPosOnTile canvasView line.lineFrom tile
+    lineMid = getPosOnTile canvasView line.lineMid tile
+  in
+    LineOnTile (Line lastMid lineFrom lineMid line.colour line.width) tile
+
+getPosOnTile : CanvasView -> Position -> Tile -> Position
+getPosOnTile canvasView pos tile =
+  let
+    scaledPos = getScaledPos canvasView pos
+    tilePos = Vector.multiply (Position tile.i tile.j) tileSize
+  in
+    Vector.minus scaledPos tilePos
+
 --Returns a command batch representing lines to draw on tiles
 --the batch might contain more than one line/tile to draw if
 --the line crosses a tile boundary
-getLineWithTiles : Line -> CanvasView -> List LineWithTile
+getLineWithTiles : Line -> CanvasView -> List LineOnTile
 getLineWithTiles lineToDraw canvasView =
-  getTilesForLine lineToDraw canvasView |> List.map (\tile -> LineWithTile lineToDraw tile)
+  getTilesForLine lineToDraw canvasView
+    |> List.map (getLineOnTile canvasView lineToDraw)
 
 
 --Returns the set of tiles that a line might have crossed
