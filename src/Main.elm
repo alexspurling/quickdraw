@@ -6,7 +6,7 @@ import Html exposing (Html, div, text, canvas)
 import Html.Attributes exposing (id, style, class)
 
 import Json.Encode as JE exposing (Value, object)
-import Json.Decode as JD exposing ((:=), object2, object5)
+import Json.Decode as JD exposing ((:=), object2, object5, tuple2)
 import Time exposing (Time)
 
 import Phoenix.Socket
@@ -161,11 +161,8 @@ encodePosition pos =
     ]
 
 encodeTile : Tile -> JE.Value
-encodeTile tile =
-  object
-    [ ("i", JE.int tile.i)
-    , ("j", JE.int tile.j)
-    ]
+encodeTile (i, j) =
+  JE.list [JE.int i,JE.int j]
 
 linesOnTilesDecoder : JD.Decoder (List TileLine)
 linesOnTilesDecoder =
@@ -195,9 +192,7 @@ positionDecoder =
 
 tileDecoder : JD.Decoder Tile
 tileDecoder =
-  object2 Tile
-    ("i" := JD.int)
-    ("j" := JD.int)
+  tuple2 (,) JD.int JD.int
 
 sendDraw : Phoenix.Socket.Socket Msg -> List TileLine -> (Phoenix.Socket.Socket Msg, Cmd Msg)
 sendDraw phxSocket tileLines =

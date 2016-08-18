@@ -129,13 +129,13 @@ app.ports.loadCanvas.subscribe(function() {
 app.ports.drawLine.subscribe(drawLine);
 
 function drawLine(tileLine) {
-  var i = tileLine.tile.i;
-  var j = tileLine.tile.j;
+  var i = tileLine.tile[0];
+  var j = tileLine.tile[1];
   if(typeof tileMap[i] === 'undefined' || typeof tileMap[i][j] === 'undefined') {
       return;
   }
-  drawTileLine(tileLine.tile.i, tileLine.tile.j, tileLine.line);
-  copyTileToCanvas(tileLine.tile.i, tileLine.tile.j);
+  drawTileLine(i, j, tileLine.line);
+  copyTileToCanvas(i, j);
 }
 
 function drawTileLine(i, j, line) {

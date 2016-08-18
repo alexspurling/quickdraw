@@ -32,10 +32,7 @@ type alias CanvasSize =
   , height : Int
   }
 
-type alias Tile =
-  { i : Int
-  , j : Int
-  }
+type alias Tile = (Int, Int)
 
 type alias TileLine =
   { line : Line

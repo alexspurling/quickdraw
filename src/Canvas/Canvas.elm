@@ -3,6 +3,7 @@ module Canvas.Canvas exposing (..)
 import Collage
 import Element
 import Time exposing (Time)
+import Set exposing (Set)
 
 import Canvas.Ports exposing (..)
 import Canvas.Mouse as Mouse
@@ -17,7 +18,7 @@ type alias Model =
   , curColour : Colour
   , canvasView : CanvasView
   , tileLines : Maybe (List TileLine)
-  , visibleTiles : List Tile
+  , visibleTiles : Set Tile
   , viewUpdated : Bool --A flag to tell whether or not to render the view for a given animation frame
   , mousePosDragStart : Position
   , gridPosDragStart : Position
@@ -33,7 +34,7 @@ init =
   , curColour = Colours.Black
   , canvasView = CanvasView (CanvasSize 800 600) 0 1 (Position 0 0)
   , tileLines = Maybe.Nothing
-  , visibleTiles = []
+  , visibleTiles = Set.empty
   , viewUpdated = False
   , mousePosDragStart = Position 0 0
   , gridPosDragStart = Position 0 0
@@ -160,7 +161,7 @@ updateCanvasSize model canvasSize =
   in
     { model | canvasView = newCanvasView, visibleTiles = visibleTiles, viewUpdated = True }
 
-getVisibleTiles : CanvasView -> List Tile
+getVisibleTiles : CanvasView -> Set Tile
 getVisibleTiles canvasView =
   let
     tileLeft = floor(toFloat (canvasView.curPos.x) / toFloat(tileSize))
@@ -170,6 +171,7 @@ getVisibleTiles canvasView =
     numTilesJ = floor (canvasView.scale * (toFloat canvasView.size.height) / tileSize + 1)
   in
     getTileRange tileLeft (tileLeft+numTilesI) tileTop (tileTop+numTilesJ)
+      |> Set.fromList
 
 
 getTileLine : CanvasView -> Line -> Tile -> TileLine
@@ -182,10 +184,10 @@ getTileLine canvasView line tile =
     TileLine (Line lastMid lineFrom lineMid line.colour line.width) tile
 
 getPosOnTile : CanvasView -> Position -> Tile -> Position
-getPosOnTile canvasView pos tile =
+getPosOnTile canvasView pos (tileI, tileJ) =
   let
     scaledPos = getScaledPos canvasView pos
-    tilePos = Vector.multiply (Position tile.i tile.j) tileSize
+    tilePos = Vector.multiply (Position tileI tileJ) tileSize
   in
     Vector.minus scaledPos tilePos
 
@@ -202,27 +204,28 @@ getTileLines lineToDraw canvasView =
 getTilesForLine : Line -> CanvasView -> List Tile
 getTilesForLine line canvasView =
   let
-    tileCurveFrom = tileAt canvasView line.lastMid
-    tileCurveMid = tileAt canvasView line.lineFrom
-    tileCurveTo = tileAt canvasView line.lineMid --We only draw the curve up to the midpoint of the current line
+    (tileFromI, tileFromJ) = tileAt canvasView line.lastMid
+    (tileMidI, tileMidJ) = tileAt canvasView line.lineFrom
+    (tileToI, tileToJ) = tileAt canvasView line.lineMid --We only draw the curve up to the midpoint of the current line
 
     --Loop through all the tiles that this line might pass through and draw on them
     --Note that the line might not actually intersect all of the tiles in which
     --case the line drawn will simply not be visible
-    minI = min3 tileCurveFrom.i tileCurveMid.i tileCurveTo.i
-    maxI = max3 tileCurveFrom.i tileCurveMid.i tileCurveTo.i
-    minJ = min3 tileCurveFrom.j tileCurveMid.j tileCurveTo.j
-    maxJ = max3 tileCurveFrom.j tileCurveMid.j tileCurveTo.j
+    minI = min3 tileFromI tileMidI tileToI
+    maxI = max3 tileFromI tileMidI tileToI
+    minJ = min3 tileFromJ tileMidJ tileToJ
+    maxJ = max3 tileFromJ tileMidJ tileToJ
   in
     getTileRange minI maxI minJ maxJ
 
+getTileRange : Int -> Int -> Int -> Int-> List Tile
 getTileRange minI maxI minJ maxJ =
   let
     rangeI = [minI..maxI]
     rangeJ = [minJ..maxJ]
 
     createTilesWithI js i =
-      List.map (Tile i) js
+      List.map ((,) i) js
   in
     List.concatMap (createTilesWithI rangeJ) rangeI
 
@@ -233,7 +236,7 @@ tileAt canvasView pos =
     i = floor(toFloat (scaledCanvasPos.x) / toFloat(tileSize))
     j = floor(toFloat (scaledCanvasPos.y) / toFloat(tileSize))
   in
-    Tile i j
+    (i,j)
 
 getScaledPos : CanvasView -> Position -> Position
 getScaledPos canvasView pos =
