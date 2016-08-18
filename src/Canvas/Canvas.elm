@@ -17,6 +17,7 @@ type alias Model =
   , curColour : Colour
   , canvasView : CanvasView
   , tileLines : Maybe (List TileLine)
+  , visibleTiles : List Tile
   , viewUpdated : Bool --A flag to tell whether or not to render the view for a given animation frame
   , mousePosDragStart : Position
   , gridPosDragStart : Position
@@ -32,6 +33,7 @@ init =
   , curColour = Colours.Black
   , canvasView = CanvasView (CanvasSize 800 600) 0 1 (Position 0 0)
   , tileLines = Maybe.Nothing
+  , visibleTiles = []
   , viewUpdated = False
   , mousePosDragStart = Position 0 0
   , gridPosDragStart = Position 0 0
@@ -119,8 +121,9 @@ updateDrag mousePos model =
       --This could be done by nested update but the current version of the Elm IntelliJ plugin doesn't like it
       curCanvasView = model.canvasView
       newCanvasView = { curCanvasView | curPos = curPos }
+      visibleTiles = getVisibleTiles newCanvasView
     in
-      { model | canvasView = newCanvasView, viewUpdated = True }
+      { model | canvasView = newCanvasView, visibleTiles = visibleTiles, viewUpdated = True }
   else
     model
 
@@ -143,16 +146,31 @@ updateZoom model delta mousePos =
 
     curCanvasView = model.canvasView
     newCanvasView = { curCanvasView | zoom = zoom, scale = scale, curPos = curPos }
+
+    visibleTiles = getVisibleTiles newCanvasView
   in
-    { model | canvasView = newCanvasView, drawMode = drawMode, viewUpdated = True }
+    { model | canvasView = newCanvasView, drawMode = drawMode, visibleTiles = visibleTiles, viewUpdated = True }
 
 updateCanvasSize : Model -> CanvasSize -> Model
 updateCanvasSize model canvasSize =
   let
     curCanvasView = model.canvasView
     newCanvasView = { curCanvasView | size = canvasSize }
+    visibleTiles = getVisibleTiles newCanvasView
   in
-    { model | canvasView = newCanvasView, viewUpdated = True }
+    { model | canvasView = newCanvasView, visibleTiles = visibleTiles, viewUpdated = True }
+
+getVisibleTiles : CanvasView -> List Tile
+getVisibleTiles canvasView =
+  let
+    tileLeft = floor(toFloat (canvasView.curPos.x) / toFloat(tileSize))
+    tileTop = floor(toFloat (canvasView.curPos.y) / toFloat(tileSize))
+
+    numTilesI = floor (canvasView.scale * (toFloat canvasView.size.width) / tileSize + 1)
+    numTilesJ = floor (canvasView.scale * (toFloat canvasView.size.height) / tileSize + 1)
+  in
+    getTileRange tileLeft (tileLeft+numTilesI) tileTop (tileTop+numTilesJ)
+
 
 getTileLine : CanvasView -> Line -> Tile -> TileLine
 getTileLine canvasView line tile =
@@ -195,7 +213,11 @@ getTilesForLine line canvasView =
     maxI = max3 tileCurveFrom.i tileCurveMid.i tileCurveTo.i
     minJ = min3 tileCurveFrom.j tileCurveMid.j tileCurveTo.j
     maxJ = max3 tileCurveFrom.j tileCurveMid.j tileCurveTo.j
+  in
+    getTileRange minI maxI minJ maxJ
 
+getTileRange minI maxI minJ maxJ =
+  let
     rangeI = [minI..maxI]
     rangeJ = [minJ..maxJ]
 

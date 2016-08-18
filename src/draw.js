@@ -200,7 +200,7 @@ function newTile(i, j) {
   tileCtx.lineCap = 'round';
   tileCtx.lineJoin = 'round';
   tileCtx.lineWidth = 3;
-//  tileCtx.strokeRect(0,0,tileSize,tileSize);
+  tileCtx.strokeRect(0,0,tileSize,tileSize);
   tileCtx.lineWidth = 10;
   return tileCtx;
 }
