@@ -36,6 +36,13 @@ app.ports.loadCanvas.subscribe(function() {
       app.ports.canvasMouseMoved.send({mousePos: mousePos, mouseDown: mouseDown});
   }, false);
 
+  var getMousePos = function(canvas, touchEvent) {
+    var rect = canvas.getBoundingClientRect();
+    var canvasX = parseInt(touchEvent.touches[0].clientX - rect.left);
+    var canvasY = parseInt(touchEvent.touches[0].clientY - rect.top);
+    return {x: canvasX, y: canvasY};
+  };
+
   canvas.addEventListener("touchstart", function (e) {
       //Toggle the mouse down state to off because we want to
       //set this current position as the starting
@@ -117,55 +124,7 @@ app.ports.loadCanvas.subscribe(function() {
   }, false);
 });
 
-function createTiles() {
-  visibleTiles(function(i, j) {
-    //If the tile doesn't exist yet, create it
-    var tileCol = tileMap[i];
-    if (!tileCol) {
-      tileMap[i] = tileCol = {};
-    }
-    var tile = tileCol[j];
-    if (!tile) {
-      tileCol[j] = tile = newTile(i, j);
-    }
-  });
-}
-
-function newTile(i, j) {
-  var tile = document.createElement('canvas');
-  tile.width = tileSize;
-  tile.height = tileSize;
-  var tileCtx = tile.getContext('2d');
-  tileCtx.lineCap = 'round';
-  tileCtx.lineJoin = 'round';
-  tileCtx.lineWidth = 3;
-//  tileCtx.strokeRect(0,0,tileSize,tileSize);
-  tileCtx.lineWidth = 10;
-  return tileCtx;
-}
-
-function copyFromTileMap() {
-  visibleTiles(function(i, j) {
-    copyTileToCanvas(i, j);
-  });
-}
-
-function copyTileToCanvas(i, j) {
-  var tile = tileMap[i][j];
-  //The position on the canvas on which to place the tiles
-  var canvasX = i * (tileSize / scale) - (curX / scale);
-  var canvasY = j * (tileSize / scale) - (curY / scale);
-  var canvasTileSize = tileSize / scale;
-  ctx.clearRect(canvasX, canvasY, (tileSize / scale), (tileSize / scale));
-  ctx.drawImage(tile.canvas, canvasX, canvasY, canvasTileSize, canvasTileSize);
-}
-
-function getMousePos(canvas, touchEvent) {
-  var rect = canvas.getBoundingClientRect();
-  var canvasX = parseInt(touchEvent.touches[0].clientX - rect.left);
-  var canvasY = parseInt(touchEvent.touches[0].clientY - rect.top);
-  return {x: canvasX, y: canvasY};
-}
+/* Draw on the canvas */
 
 app.ports.drawLine.subscribe(drawLine);
 
@@ -196,52 +155,27 @@ function drawLineOnTile(i, j, line) {
   tile.closePath();
 }
 
-function vec(x, y) {
-  return {x:x, y:y};
+function copyTileToCanvas(i, j) {
+  var tile = tileMap[i][j];
+  //The position on the canvas on which to place the tiles
+  var canvasX = i * (tileSize / scale) - (curX / scale);
+  var canvasY = j * (tileSize / scale) - (curY / scale);
+  var canvasTileSize = tileSize / scale;
+  ctx.clearRect(canvasX, canvasY, (tileSize / scale), (tileSize / scale));
+  ctx.drawImage(tile.canvas, canvasX, canvasY, canvasTileSize, canvasTileSize);
 }
 
-//Actually the magnitude of 3D cross product
-function cross(v, w) {
-  return v.x * w.y - v.y * w.x;
-}
+/* Update the current view of the canvas */
 
-function minus(v, w) {
-  return {x:(v.x - w.x), y:(v.y - w.y)};
-}
+app.ports.updateCanvas.subscribe(updateCanvas);
 
-function plus(v, w) {
-  return {x:(v.x + w.x), y:(v.y + w.y)};
-}
-
-function multiply(v, s) {
-  return {x:(v.x * s), y:(v.y * s)};
-}
-
-function div(v, d) {
-  return {x:(v.x / d), y:(v.y / d)};
-}
-
-function tileAt(pos) {
-  var scaledCanvasX = pos.x * scale + curX;
-  var scaledCanvasY = pos.y * scale + curY;
-  return {i: Math.floor(scaledCanvasX / tileSize), j: Math.floor(scaledCanvasY / tileSize)};
-}
-
-/* Get the position on a given tile
- for a given canvasX and canvasY
- */
-function posOnTile(pos, i, j) {
-  var scaledCanvasX = pos.x * scale + curX;
-  var scaledCanvasY = pos.y * scale + curY;
-  var tileX = scaledCanvasX - tileSize * i;
-  var tileY = scaledCanvasY - tileSize * j;
-  return {x:tileX, y:tileY};
-}
-
-function pan(x, y) {
-  curX += 20 * x;
-  curY += 20 * y;
-  console.log("CurXY", curX, curY);
+function updateCanvas(canvasView) {
+  zoom = canvasView.zoom;
+  scale = canvasView.scale;
+  curX = canvasView.curPos.x;
+  curY = canvasView.curPos.y;
+  canvas.width = canvasView.size.width;
+  canvas.height = canvasView.size.height;
   createTiles();
   copyFromTileMap();
 }
@@ -258,17 +192,37 @@ function visibleTiles(func) {
   }
 }
 
-app.ports.updateCanvas.subscribe(updateCanvas);
+function newTile(i, j) {
+  var tile = document.createElement('canvas');
+  tile.width = tileSize;
+  tile.height = tileSize;
+  var tileCtx = tile.getContext('2d');
+  tileCtx.lineCap = 'round';
+  tileCtx.lineJoin = 'round';
+  tileCtx.lineWidth = 3;
+//  tileCtx.strokeRect(0,0,tileSize,tileSize);
+  tileCtx.lineWidth = 10;
+  return tileCtx;
+}
 
-function updateCanvas(canvasView) {
-  zoom = canvasView.zoom;
-  scale = canvasView.scale;
-  curX = canvasView.curPos.x;
-  curY = canvasView.curPos.y;
-  canvas.width = canvasView.size.width;
-  canvas.height = canvasView.size.height;
-  createTiles();
-  copyFromTileMap();
+function createTiles() {
+  visibleTiles(function(i, j) {
+    //If the tile doesn't exist yet, create it
+    var tileCol = tileMap[i];
+    if (!tileCol) {
+      tileMap[i] = tileCol = {};
+    }
+    var tile = tileCol[j];
+    if (!tile) {
+      tileCol[j] = tile = newTile(i, j);
+    }
+  });
+}
+
+function copyFromTileMap() {
+  visibleTiles(function(i, j) {
+    copyTileToCanvas(i, j);
+  });
 }
 
 function debug(debugStr) {
