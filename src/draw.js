@@ -128,17 +128,17 @@ app.ports.loadCanvas.subscribe(function() {
 
 app.ports.drawLine.subscribe(drawLine);
 
-function drawLine(lineWithTile) {
-  var i = lineWithTile.tile.i;
-  var j = lineWithTile.tile.j;
+function drawLine(tileLine) {
+  var i = tileLine.tile.i;
+  var j = tileLine.tile.j;
   if(typeof tileMap[i] === 'undefined' || typeof tileMap[i][j] === 'undefined') {
       return;
   }
-  drawLineOnTile(lineWithTile.tile.i, lineWithTile.tile.j, lineWithTile.line);
-  copyTileToCanvas(lineWithTile.tile.i, lineWithTile.tile.j);
+  drawTileLine(tileLine.tile.i, tileLine.tile.j, tileLine.line);
+  copyTileToCanvas(tileLine.tile.i, tileLine.tile.j);
 }
 
-function drawLineOnTile(i, j, line) {
+function drawTileLine(i, j, line) {
   var tile = tileMap[i][j];
 
   //Instead of doing simple straight lines between points A, B and C, we find the

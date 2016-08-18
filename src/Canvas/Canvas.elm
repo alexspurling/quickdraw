@@ -16,7 +16,7 @@ type alias Model =
   , mouseDown : Bool
   , curColour : Colour
   , canvasView : CanvasView
-  , lineToDraw : Maybe Line
+  , tileLines : Maybe (List TileLine)
   , viewUpdated : Bool --A flag to tell whether or not to render the view for a given animation frame
   , mousePosDragStart : Position
   , gridPosDragStart : Position
@@ -31,7 +31,7 @@ init =
   , mouseDown = False
   , curColour = Colours.Black
   , canvasView = CanvasView (CanvasSize 800 600) 0 1 (Position 0 0)
-  , lineToDraw = Maybe.Nothing
+  , tileLines = Maybe.Nothing
   , viewUpdated = False
   , mousePosDragStart = Position 0 0
   , gridPosDragStart = Position 0 0
@@ -59,7 +59,7 @@ updateAnimationFrame model =
   if model.mouseDown && model.drawMode then
     updateLineToDraw model
   else
-    { model | lineToDraw = Maybe.Nothing }
+    { model | tileLines = Maybe.Nothing }
 
 
 update : Msg -> Model -> Model
@@ -95,8 +95,9 @@ updateLineToDraw model =
   let
     lineToDraw = (Mouse.getLine model.mouse (Colours.toHex model.curColour) model.lineWidth)
     newMouse = Mouse.update (Mouse.UpdatePrevPositions lineToDraw.lineMid) model.mouse
+    tileLines = getTileLines lineToDraw model.canvasView
   in
-    { model | mouse = newMouse, lineToDraw = Maybe.Just lineToDraw }
+    { model | mouse = newMouse, tileLines = Maybe.Just tileLines }
 
 
 updateMouse : MouseMovedEvent -> Model -> Model
@@ -153,14 +154,14 @@ updateCanvasSize model canvasSize =
   in
     { model | canvasView = newCanvasView, viewUpdated = True }
 
-getLineOnTile : CanvasView -> Line -> Tile -> LineOnTile
-getLineOnTile canvasView line tile =
+getTileLine : CanvasView -> Line -> Tile -> TileLine
+getTileLine canvasView line tile =
   let
     lastMid = getPosOnTile canvasView line.lastMid tile
     lineFrom = getPosOnTile canvasView line.lineFrom tile
     lineMid = getPosOnTile canvasView line.lineMid tile
   in
-    LineOnTile (Line lastMid lineFrom lineMid line.colour line.width) tile
+    TileLine (Line lastMid lineFrom lineMid line.colour line.width) tile
 
 getPosOnTile : CanvasView -> Position -> Tile -> Position
 getPosOnTile canvasView pos tile =
@@ -173,10 +174,10 @@ getPosOnTile canvasView pos tile =
 --Returns a command batch representing lines to draw on tiles
 --the batch might contain more than one line/tile to draw if
 --the line crosses a tile boundary
-getLineWithTiles : Line -> CanvasView -> List LineOnTile
-getLineWithTiles lineToDraw canvasView =
+getTileLines : Line -> CanvasView -> List TileLine
+getTileLines lineToDraw canvasView =
   getTilesForLine lineToDraw canvasView
-    |> List.map (getLineOnTile canvasView lineToDraw)
+    |> List.map (getTileLine canvasView lineToDraw)
 
 
 --Returns the set of tiles that a line might have crossed
