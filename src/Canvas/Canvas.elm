@@ -19,6 +19,8 @@ type alias Model =
   , canvasView : CanvasView
   , tileLines : Maybe (List TileLine)
   , visibleTiles : Set Tile
+  , prevVisibleTiles : Set Tile
+  , tileDiff : TileDiff
   , viewUpdated : Bool --A flag to tell whether or not to render the view for a given animation frame
   , mousePosDragStart : Position
   , gridPosDragStart : Position
@@ -35,6 +37,8 @@ init =
   , canvasView = CanvasView (CanvasSize 800 600) 0 1 (Position 0 0)
   , tileLines = Maybe.Nothing
   , visibleTiles = Set.empty
+  , prevVisibleTiles = Set.empty
+  , tileDiff = TileDiff Set.empty Set.empty
   , viewUpdated = False
   , mousePosDragStart = Position 0 0
   , gridPosDragStart = Position 0 0
@@ -63,13 +67,17 @@ updateAnimationFrame model =
     updateLineToDraw model
   else
     { model | tileLines = Maybe.Nothing }
+      |> updateTileDiff
 
 
 update : Msg -> Model -> Model
 update msg model =
   case msg of
     CanvasMouseMoved event ->
-      model |> updateMouse event |> updateDrag event.mousePos
+      model
+        |> updateMouse event
+        |> updateDrag event.mousePos
+        |> updateVisibleTiles
     CanvasMouseDown mousePos ->
       { model | mouseDown = True, mousePosDragStart = mousePos, gridPosDragStart = model.canvasView.curPos }
     CanvasMouseUp ->
@@ -77,9 +85,13 @@ update msg model =
     ColourSelected colour ->
       { model | curColour = colour }
     CanvasResized canvasSize ->
-      updateCanvasSize model canvasSize
+      model
+        |> updateCanvasSize canvasSize
+        |> updateVisibleTiles
     Wheel wheelEvent ->
-      updateZoom model wheelEvent.delta wheelEvent.mousePos
+      model
+        |> updateZoom wheelEvent.delta wheelEvent.mousePos
+        |> updateVisibleTiles
     ToggleDrawMode ->
       let
         selectedDrawMode = not model.selectedDrawMode
@@ -122,15 +134,14 @@ updateDrag mousePos model =
       --This could be done by nested update but the current version of the Elm IntelliJ plugin doesn't like it
       curCanvasView = model.canvasView
       newCanvasView = { curCanvasView | curPos = curPos }
-      visibleTiles = getVisibleTiles newCanvasView
     in
-      { model | canvasView = newCanvasView, visibleTiles = visibleTiles, viewUpdated = True }
+      { model | canvasView = newCanvasView, viewUpdated = True }
   else
     model
 
 
-updateZoom : Model -> Int -> Position -> Model
-updateZoom model delta mousePos =
+updateZoom : Int -> Position -> Model -> Model
+updateZoom delta mousePos model =
   let
     --Get the point on the canvas around which we want to scale
     --This point should remain fixed as scale changes
@@ -147,19 +158,23 @@ updateZoom model delta mousePos =
 
     curCanvasView = model.canvasView
     newCanvasView = { curCanvasView | zoom = zoom, scale = scale, curPos = curPos }
-
-    visibleTiles = getVisibleTiles newCanvasView
   in
-    { model | canvasView = newCanvasView, drawMode = drawMode, visibleTiles = visibleTiles, viewUpdated = True }
+    { model | canvasView = newCanvasView, drawMode = drawMode, viewUpdated = True }
 
-updateCanvasSize : Model -> CanvasSize -> Model
-updateCanvasSize model canvasSize =
+updateCanvasSize : CanvasSize -> Model -> Model
+updateCanvasSize canvasSize model =
   let
     curCanvasView = model.canvasView
     newCanvasView = { curCanvasView | size = canvasSize }
-    visibleTiles = getVisibleTiles newCanvasView
   in
-    { model | canvasView = newCanvasView, visibleTiles = visibleTiles, viewUpdated = True }
+    { model | canvasView = newCanvasView, viewUpdated = True }
+
+updateVisibleTiles : Model -> Model
+updateVisibleTiles model =
+  let
+    visibleTiles = getVisibleTiles model.canvasView
+  in
+    {model | visibleTiles = visibleTiles }
 
 getVisibleTiles : CanvasView -> Set Tile
 getVisibleTiles canvasView =
@@ -173,6 +188,17 @@ getVisibleTiles canvasView =
     getTileRange tileLeft (tileLeft+numTilesI) tileTop (tileTop+numTilesJ)
       |> Set.fromList
 
+updateTileDiff : Model -> Model
+updateTileDiff model =
+  { model | tileDiff = getTileDiff model, prevVisibleTiles = model.visibleTiles }
+
+getTileDiff : Model -> TileDiff
+getTileDiff model =
+  let
+    newTiles = Set.diff model.visibleTiles model.prevVisibleTiles
+    oldTiles = Set.diff model.prevVisibleTiles model.visibleTiles
+  in
+    TileDiff newTiles oldTiles
 
 getTileLine : CanvasView -> Line -> Tile -> TileLine
 getTileLine canvasView line tile =

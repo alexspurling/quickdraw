@@ -1,5 +1,6 @@
 port module Canvas.Ports exposing (..)
 
+import Set exposing (Set)
 import Canvas.Vector exposing (Position)
 
 type alias MouseMovedEvent =
@@ -37,6 +38,11 @@ type alias Tile = (Int, Int)
 type alias TileLine =
   { line : Line
   , tile : Tile
+  }
+
+type alias TileDiff =
+  { newTiles : Set Tile
+  , oldTiles : Set Tile
   }
 
 port loadCanvas : () -> Cmd msg

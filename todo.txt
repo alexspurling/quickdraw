@@ -1,11 +1,18 @@
 
 - allow drawing without moving mouse
 
+- calculate the changes to visible tiles on each frame
+  - send tile changes to the client so that it can add or remove them from memory
+- subscribe the client to a channel for the each visible tile
+
+
 - server side
   - generate a unique client id
   - do not broadcast draw messages to the current user
 
 DONE
+
++ calculate the visible tiles in Elm
 
 + allow different pencil widths
 + allow erase (white colour?)
