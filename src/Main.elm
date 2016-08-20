@@ -32,7 +32,6 @@ type Msg =
   | CanvasMsg Canvas.Msg
   | PhoenixMsg (Phoenix.Socket.Msg Msg)
   | ReceiveChatMessage JE.Value
-  | JoinedChannel JE.Value
 
 -- INIT
 
@@ -60,14 +59,13 @@ initPhxSocket : Phoenix.Socket.Socket Msg
 initPhxSocket =
   Phoenix.Socket.init socketServer
     |> Phoenix.Socket.withDebug
-    |> Phoenix.Socket.on "join" "room:lobby" JoinedChannel
     |> Phoenix.Socket.on "new:msg" "room:lobby" ReceiveChatMessage
 
 joinChannel : Phoenix.Socket.Socket Msg -> (Phoenix.Socket.Socket Msg, Cmd Msg)
 joinChannel phxSocket =
   let
     channel =
-      Phoenix.Channel.init "room:lobby"
+      Phoenix.Channel.init "room:0-0"
     (newPhxSocket, phxCmd) =
       Phoenix.Socket.join channel phxSocket
   in
@@ -113,11 +111,6 @@ update msg model =
                 []
       in
         model ! drawLineCmd
-    JoinedChannel payload ->
-      let
-        _ = Debug.log "I joined a channel" payload
-      in
-        (model, Cmd.none)
 
 getDrawCmd : Model -> (Model, Cmd Msg)
 getDrawCmd model =
@@ -128,27 +121,44 @@ getDrawCmd model =
       model ! []
 
 getSendDrawCmd : (Model, Cmd Msg) -> (Model, Cmd Msg)
-getSendDrawCmd (model, cmd) =
+getSendDrawCmd (model, prevCmd) =
   case model.canvas.tileLines of
     Just tileLines ->
       let
-        (phxSocket, phxCmd) = sendDraw model.phxSocket tileLines
+        --Build up a batch of phoenix commands for each of the lines that we have to draw
+        (phxSocket, phxCmd) = List.foldl sendDraw (model.phxSocket, Cmd.none) tileLines
       in
-        { model | phxSocket = phxSocket } ! [cmd, phxCmd]
+        { model | phxSocket = phxSocket } ! [prevCmd, phxCmd]
     Nothing ->
-        model ! [cmd]
+        model ! [prevCmd]
 
 getUpdateCanvasCmd : (Model, Cmd Msg) -> (Model, Cmd Msg)
-getUpdateCanvasCmd (model, cmd) =
+getUpdateCanvasCmd (model, prevCmd) =
   if model.canvas.viewUpdated then
     let
       curCanvas = model.canvas
       updateCanvasCmd = updateCanvas (model.canvas.canvasView, model.canvas.tileDiff)
     in
       { model | canvas = { curCanvas | viewUpdated = False } }
-      ! [cmd, updateCanvasCmd]
+      ! [prevCmd, updateCanvasCmd]
   else
-    model ! [cmd]
+    model ! [prevCmd]
+
+sendDraw : TileLine -> (Phoenix.Socket.Socket Msg, Cmd Msg) -> (Phoenix.Socket.Socket Msg, Cmd Msg)
+sendDraw tileLine (phxSocket, prevCmd) =
+  let
+    (tileI, tileJ) = tileLine.tile
+    payload =
+      (JE.object [ ( "body", encodeTileLine tileLine ) ])
+    channel = "room:" ++ (toString tileI) ++ "-" ++ (toString tileJ)
+    push =
+      Phoenix.Push.init "new:msg" channel
+        |> Phoenix.Push.withPayload payload
+
+    ( newPhxSocket, phxCmd ) =
+      Phoenix.Socket.push push phxSocket
+  in
+    newPhxSocket ! [prevCmd, Cmd.map PhoenixMsg phxCmd]
 
 encodeTileLines : List TileLine -> JE.Value
 encodeTileLines tileLines =
@@ -211,22 +221,6 @@ positionDecoder =
 tileDecoder : JD.Decoder Tile
 tileDecoder =
   tuple2 (,) JD.int JD.int
-
-sendDraw : Phoenix.Socket.Socket Msg -> List TileLine -> (Phoenix.Socket.Socket Msg, Cmd Msg)
-sendDraw phxSocket tileLines =
-  let
-    payload =
-      (JE.object [ ( "body", encodeTileLines tileLines ) ])
-    push' =
-      Phoenix.Push.init "new:msg" "room:lobby"
-        |> Phoenix.Push.withPayload payload
-
-    ( newPhxSocket, phxCmd ) =
-      Phoenix.Socket.push push' phxSocket
-  in
-    ( newPhxSocket
-    , Cmd.map PhoenixMsg phxCmd
-    )
 
 -- VIEW
 
