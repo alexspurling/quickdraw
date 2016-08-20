@@ -41,8 +41,8 @@ type alias TileLine =
   }
 
 type alias TileDiff =
-  { newTiles : Set Tile
-  , oldTiles : Set Tile
+  { newTiles : List Tile
+  , oldTiles : List Tile
   }
 
 port loadCanvas : () -> Cmd msg
@@ -57,6 +57,6 @@ port drawLine : (TileLine) -> Cmd msg
 
 port wheel : (WheelEvent -> msg) -> Sub msg
 
-port updateCanvas : CanvasView -> Cmd msg
+port updateCanvas : (CanvasView, TileDiff) -> Cmd msg
 
 port canvasResized : (CanvasSize -> msg) -> Sub msg

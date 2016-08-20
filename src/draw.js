@@ -169,14 +169,17 @@ function copyTileToCanvas(i, j) {
 
 app.ports.updateCanvas.subscribe(updateCanvas);
 
-function updateCanvas(canvasView) {
+function updateCanvas(canvasViewAndTileDiff) {
+  var canvasView = canvasViewAndTileDiff[0];
+  var tileDiff = canvasViewAndTileDiff[1];
+  createTiles(tileDiff.newTiles);
+  removeTiles(tileDiff.oldTiles);
   zoom = canvasView.zoom;
   scale = canvasView.scale;
   curX = canvasView.curPos.x;
   curY = canvasView.curPos.y;
   canvas.width = canvasView.size.width;
   canvas.height = canvasView.size.height;
-  createTiles();
   copyFromTileMap();
 }
 
@@ -192,6 +195,40 @@ function visibleTiles(func) {
   }
 }
 
+function createTiles(tilesToCreate) {
+  tilesToCreate.map(function(tilePos) {
+    var i = tilePos[0];
+    var j = tilePos[1];
+    var tileCol = tileMap[i];
+    if (!tileCol) {
+      tileMap[i] = tileCol = {};
+    }
+    if (!tileCol[j]) {
+      tileCol[j] = newTile(i, j);
+    }
+    console.log("Created tile", i, j);
+  });
+}
+
+function removeTiles(tilesToRemove) {
+  tilesToRemove.map(function(tilePos) {
+    var i = tilePos[0];
+    var j = tilePos[1];
+    var tileCol = tileMap[i];
+    if (!tileCol) {
+      console.log("Uh, this tile never existed:", tilePos);
+      return;
+    }
+    var tile = tileCol[j];
+    if (!tile) {
+      console.log("Uh, this tile doesn't exist:", tilePos);
+      return;
+    }
+    tileCol[j] = null;
+    console.log("Removed tile", i, j);
+  });
+}
+
 function newTile(i, j) {
   var tile = document.createElement('canvas');
   tile.width = tileSize;
@@ -203,20 +240,6 @@ function newTile(i, j) {
   tileCtx.strokeRect(0,0,tileSize,tileSize);
   tileCtx.lineWidth = 10;
   return tileCtx;
-}
-
-function createTiles() {
-  visibleTiles(function(i, j) {
-    //If the tile doesn't exist yet, create it
-    var tileCol = tileMap[i];
-    if (!tileCol) {
-      tileMap[i] = tileCol = {};
-    }
-    var tile = tileCol[j];
-    if (!tile) {
-      tileCol[j] = tile = newTile(i, j);
-    }
-  });
 }
 
 function copyFromTileMap() {

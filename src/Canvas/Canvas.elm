@@ -38,7 +38,7 @@ init =
   , tileLines = Maybe.Nothing
   , visibleTiles = Set.empty
   , prevVisibleTiles = Set.empty
-  , tileDiff = TileDiff Set.empty Set.empty
+  , tileDiff = TileDiff [] []
   , viewUpdated = False
   , mousePosDragStart = Position 0 0
   , gridPosDragStart = Position 0 0
@@ -179,8 +179,8 @@ updateVisibleTiles model =
 getVisibleTiles : CanvasView -> Set Tile
 getVisibleTiles canvasView =
   let
-    tileLeft = floor(toFloat (canvasView.curPos.x) / toFloat(tileSize))
-    tileTop = floor(toFloat (canvasView.curPos.y) / toFloat(tileSize))
+    tileLeft = floor (toFloat (canvasView.curPos.x) / toFloat(tileSize))
+    tileTop = floor (toFloat (canvasView.curPos.y) / toFloat(tileSize))
 
     numTilesI = floor (canvasView.scale * (toFloat canvasView.size.width) / tileSize + 1)
     numTilesJ = floor (canvasView.scale * (toFloat canvasView.size.height) / tileSize + 1)
@@ -195,8 +195,8 @@ updateTileDiff model =
 getTileDiff : Model -> TileDiff
 getTileDiff model =
   let
-    newTiles = Set.diff model.visibleTiles model.prevVisibleTiles
-    oldTiles = Set.diff model.prevVisibleTiles model.visibleTiles
+    newTiles = Set.toList (Set.diff model.visibleTiles model.prevVisibleTiles)
+    oldTiles = Set.toList (Set.diff model.prevVisibleTiles model.visibleTiles)
   in
     TileDiff newTiles oldTiles
 

@@ -81,25 +81,12 @@ update msg model =
   case msg of
     AnimationFrame delta ->
       let
-        newCanvas = Canvas.updateAnimationFrame model.canvas
-        --If this updated produced a line, then create commands to draw
-        --the line on the local canvas and remote clients
+        modelWithCanvas = { model | canvas = Canvas.updateAnimationFrame model.canvas }
         (newModel, cmd) =
-          case newCanvas.tileLines of
-            Just tileLines ->
-              let
-                drawCmds = List.map drawLine tileLines
-                (phxSocket, phxCmd) = sendDraw model.phxSocket tileLines
-              in
-                { model | phxSocket = phxSocket, canvas = newCanvas }
-                ! (drawCmds ++ [phxCmd])
-            Nothing ->
-              if newCanvas.viewUpdated then
-                { model | canvas = { newCanvas | viewUpdated = False } }
-                ! [ updateCanvas newCanvas.canvasView ]
-              else
-                (model, Cmd.none)
-
+          modelWithCanvas
+            |> getDrawCmd
+            |> getSendDrawCmd
+            |> getUpdateCanvasCmd
       in
         (newModel, cmd)
     CanvasMsg canvasMsg ->
@@ -131,6 +118,37 @@ update msg model =
         _ = Debug.log "I joined a channel" payload
       in
         (model, Cmd.none)
+
+getDrawCmd : Model -> (Model, Cmd Msg)
+getDrawCmd model =
+  case model.canvas.tileLines of
+    Just tileLines ->
+      model ! List.map drawLine tileLines
+    Nothing ->
+      model ! []
+
+getSendDrawCmd : (Model, Cmd Msg) -> (Model, Cmd Msg)
+getSendDrawCmd (model, cmd) =
+  case model.canvas.tileLines of
+    Just tileLines ->
+      let
+        (phxSocket, phxCmd) = sendDraw model.phxSocket tileLines
+      in
+        { model | phxSocket = phxSocket } ! [cmd, phxCmd]
+    Nothing ->
+        model ! [cmd]
+
+getUpdateCanvasCmd : (Model, Cmd Msg) -> (Model, Cmd Msg)
+getUpdateCanvasCmd (model, cmd) =
+  if model.canvas.viewUpdated then
+    let
+      curCanvas = model.canvas
+      updateCanvasCmd = updateCanvas (model.canvas.canvasView, model.canvas.tileDiff)
+    in
+      { model | canvas = { curCanvas | viewUpdated = False } }
+      ! [cmd, updateCanvasCmd]
+  else
+    model ! [cmd]
 
 encodeTileLines : List TileLine -> JE.Value
 encodeTileLines tileLines =
