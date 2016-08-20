@@ -38,18 +38,11 @@ type Msg =
 init : (Model, Cmd Msg)
 init =
   let
-    (phxSocket, phxCmd) = initPhoenix
     (canvas, canvasCmd) = Canvas.init
   in
-    { phxSocket = phxSocket
+    { phxSocket = initPhxSocket
     , canvas = canvas }
-    ! [Cmd.map CanvasMsg canvasCmd, phxCmd]
-
-
-initPhoenix : (Phoenix.Socket.Socket Msg, Cmd Msg)
-initPhoenix =
-  initPhxSocket
-    |> joinChannel
+    ! [Cmd.map CanvasMsg canvasCmd]
 
 socketServer : String
 socketServer =
@@ -60,16 +53,6 @@ initPhxSocket =
   Phoenix.Socket.init socketServer
     |> Phoenix.Socket.withDebug
     |> Phoenix.Socket.on "new:msg" "room:lobby" ReceiveChatMessage
-
-joinChannel : Phoenix.Socket.Socket Msg -> (Phoenix.Socket.Socket Msg, Cmd Msg)
-joinChannel phxSocket =
-  let
-    channel =
-      Phoenix.Channel.init "room:0-0"
-    (newPhxSocket, phxCmd) =
-      Phoenix.Socket.join channel phxSocket
-  in
-    (newPhxSocket, Cmd.map PhoenixMsg phxCmd)
 
 
 -- UPDATE
@@ -85,6 +68,7 @@ update msg model =
             |> getDrawCmd
             |> getSendDrawCmd
             |> getUpdateCanvasCmd
+            |> getJoinLeaveCmd
       in
         (newModel, cmd)
     CanvasMsg canvasMsg ->
@@ -125,7 +109,9 @@ getSendDrawCmd (model, prevCmd) =
   case model.canvas.tileLines of
     Just tileLines ->
       let
-        --Build up a batch of phoenix commands for each of the lines that we have to draw
+        --We use fold here to build up a list of commands because the phoenix socket library always
+        --returns an updated version of the socket along with the commands which we have to pass
+        --to all subsequent calls
         (phxSocket, phxCmd) = List.foldl sendDraw (model.phxSocket, Cmd.none) tileLines
       in
         { model | phxSocket = phxSocket } ! [prevCmd, phxCmd]
@@ -147,16 +133,48 @@ getUpdateCanvasCmd (model, prevCmd) =
 sendDraw : TileLine -> (Phoenix.Socket.Socket Msg, Cmd Msg) -> (Phoenix.Socket.Socket Msg, Cmd Msg)
 sendDraw tileLine (phxSocket, prevCmd) =
   let
-    (tileI, tileJ) = tileLine.tile
     payload =
       (JE.object [ ( "body", encodeTileLine tileLine ) ])
-    channel = "room:" ++ (toString tileI) ++ "-" ++ (toString tileJ)
+    channel = (getChannelForTile tileLine.tile)
     push =
       Phoenix.Push.init "new:msg" channel
         |> Phoenix.Push.withPayload payload
 
     ( newPhxSocket, phxCmd ) =
       Phoenix.Socket.push push phxSocket
+  in
+    newPhxSocket ! [prevCmd, Cmd.map PhoenixMsg phxCmd]
+
+getChannelForTile : Tile -> String
+getChannelForTile (tileI, tileJ) =
+  "tile:" ++ toString tileI ++ "-" ++ toString tileJ
+
+getJoinLeaveCmd : (Model, Cmd Msg) -> (Model, Cmd Msg)
+getJoinLeaveCmd (model, prevCmd) =
+  let
+    channelsToJoin = List.map getChannelForTile model.canvas.tileDiff.newTiles
+    channelsToLeave = List.map getChannelForTile model.canvas.tileDiff.oldTiles
+    --We use fold here to build up a list of commands because the phoenix socket library always
+    --returns an updated version of the socket along with the commands which we have to pass
+    --to all subsequent calls
+    (phxSocket1, phxCmd1) = List.foldl joinChannel (model.phxSocket, Cmd.none) channelsToJoin
+    (phxSocket2, phxCmd2) = List.foldl leaveChannel (phxSocket1, phxCmd1) channelsToLeave
+  in
+    { model | phxSocket = phxSocket2 } ! [prevCmd, phxCmd2]
+
+
+joinChannel : String -> (Phoenix.Socket.Socket Msg, Cmd Msg) -> (Phoenix.Socket.Socket Msg, Cmd Msg)
+joinChannel channelToJoin (phxSocket, prevCmd) =
+  let
+    channel = Phoenix.Channel.init channelToJoin
+    (newPhxSocket, phxCmd) = Phoenix.Socket.join channel phxSocket
+  in
+    newPhxSocket ! [prevCmd, Cmd.map PhoenixMsg phxCmd]
+
+leaveChannel : String -> (Phoenix.Socket.Socket Msg, Cmd Msg) -> (Phoenix.Socket.Socket Msg, Cmd Msg)
+leaveChannel channelToLeave (phxSocket, prevCmd) =
+  let
+    (newPhxSocket, phxCmd) = Phoenix.Socket.leave channelToLeave phxSocket
   in
     newPhxSocket ! [prevCmd, Cmd.map PhoenixMsg phxCmd]
 
