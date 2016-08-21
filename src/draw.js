@@ -156,13 +156,15 @@ function drawTileLine(i, j, line) {
 }
 
 function copyTileToCanvas(i, j) {
-  var tile = tileMap[i][j];
-  //The position on the canvas on which to place the tiles
-  var canvasX = i * (tileSize / scale) - (curX / scale);
-  var canvasY = j * (tileSize / scale) - (curY / scale);
-  var canvasTileSize = tileSize / scale;
-  ctx.clearRect(canvasX, canvasY, (tileSize / scale), (tileSize / scale));
-  ctx.drawImage(tile.canvas, canvasX, canvasY, canvasTileSize, canvasTileSize);
+  if (tileMap[i] && tileMap[i][j]) {
+    var tile = tileMap[i][j];
+    //The position on the canvas on which to place the tiles
+    var canvasX = i * (tileSize / scale) - (curX / scale);
+    var canvasY = j * (tileSize / scale) - (curY / scale);
+    var canvasTileSize = tileSize / scale;
+    ctx.clearRect(canvasX, canvasY, (tileSize / scale), (tileSize / scale));
+    ctx.drawImage(tile.canvas, canvasX, canvasY, canvasTileSize, canvasTileSize);
+  }
 }
 
 /* Update the current view of the canvas */
@@ -178,8 +180,12 @@ function updateCanvas(canvasViewAndTileDiff) {
   scale = canvasView.scale;
   curX = canvasView.curPos.x;
   curY = canvasView.curPos.y;
-  canvas.width = canvasView.size.width;
-  canvas.height = canvasView.size.height;
+  if (canvas.width != canvasView.size.width) {
+    canvas.width = canvasView.size.width;
+  }
+  if (canvas.height != canvasView.size.height) {
+    canvas.height = canvasView.size.height;
+  }
   copyFromTileMap();
 }
 
@@ -204,7 +210,7 @@ function createTiles(tilesToCreate) {
       tileMap[i] = tileCol = {};
     }
     if (!tileCol[j]) {
-      tileCol[j] = newTile(i, j);
+      tileCol[j] = newTile();
     }
     console.log("Created tile", i, j);
   });
@@ -229,7 +235,7 @@ function removeTiles(tilesToRemove) {
   });
 }
 
-function newTile(i, j) {
+function newTile() {
   var tile = document.createElement('canvas');
   tile.width = tileSize;
   tile.height = tileSize;

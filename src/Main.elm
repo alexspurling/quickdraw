@@ -25,6 +25,9 @@ main =
 type alias Model =
   { phxSocket : Phoenix.Socket.Socket Msg
   , canvas : Canvas.Model
+  , frames : Int
+  , fps : Int
+  , time : Time
   }
 
 type Msg =
@@ -41,7 +44,10 @@ init =
     (canvas, canvasCmd) = Canvas.init
   in
     { phxSocket = initPhxSocket
-    , canvas = canvas }
+    , canvas = canvas
+    , frames = 0
+    , fps = 0
+    , time = 0 }
     ! [Cmd.map CanvasMsg canvasCmd]
 
 socketServer : String
@@ -60,17 +66,18 @@ initPhxSocket =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    AnimationFrame delta ->
+    AnimationFrame time ->
       let
-        modelWithCanvas = { model | canvas = Canvas.updateAnimationFrame model.canvas }
-        (newModel, cmd) =
-          modelWithCanvas
+        model1 = { model | canvas = Canvas.updateAnimationFrame model.canvas }
+        model2 = updateFrames time model1
+        (model3, cmd) =
+          model2
             |> getDrawCmd
             |> getSendDrawCmd
             |> getUpdateCanvasCmd
             |> getJoinLeaveCmd
       in
-        (newModel, cmd)
+        (model3, cmd)
     CanvasMsg canvasMsg ->
         {model | canvas = Canvas.update canvasMsg model.canvas} ! []
     PhoenixMsg msg ->
@@ -95,6 +102,13 @@ update msg model =
                 []
       in
         model ! drawLineCmd
+
+updateFrames : Time -> Model -> Model
+updateFrames time model =
+  if time - model.time > Time.second then
+    { model | time = time, fps = model.frames, frames = 0 }
+  else
+    { model | frames = model.frames + 1 }
 
 getDrawCmd : Model -> (Model, Cmd Msg)
 getDrawCmd model =
@@ -249,7 +263,10 @@ debugDivStyle =
   [("position", "absolute"), ("bottom", "50px")]
 
 debugDiv model =
-  div [ id "debug", style debugDivStyle ] [ text ("Model: " ++ (toString model.canvas.visibleTiles)) ]
+  div [ id "debug", style debugDivStyle ] [ text ("Model: " ++ (toString model.canvas.mouse)) ]
+
+fpsDiv model =
+  div [ id "fps", style [("position", "absolute"), ("top", "20px"), ("right", "20px")] ] [ text ("Fps: " ++ (toString model.fps)) ]
 
 colourPaletteView model =
   let
@@ -263,12 +280,13 @@ colourPaletteView model =
         Controls.ToggleDrawMode ->
           CanvasMsg (Canvas.ToggleDrawMode)
   in
-    App.map controlToCanvas (Controls.colourPalette (model.canvas.canvasView.zoom <= 500) model.canvas.selectedDrawMode model.canvas.curColour model.canvas.lineWidth)
+    App.map controlToCanvas (Controls.colourPalette (model.canvas.canvasView.zoom <= 5000) model.canvas.selectedDrawMode model.canvas.curColour model.canvas.lineWidth)
 
 view : Model -> Html Msg
 view model =
   div [ ]
     [ colourPaletteView model
+    , fpsDiv model
     , canvas [ id "mycanvas", class (canvasClass model.canvas.drawMode model.canvas.mouseDown) ] []
     , debugDiv model
     ]
@@ -280,5 +298,5 @@ subscriptions model =
   Sub.batch
     [ Phoenix.Socket.listen model.phxSocket PhoenixMsg
     , Sub.map CanvasMsg (Canvas.subscriptions)
-    , AnimationFrame.diffs AnimationFrame
+    , AnimationFrame.times AnimationFrame
     ]
