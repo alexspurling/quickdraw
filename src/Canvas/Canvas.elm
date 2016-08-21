@@ -67,7 +67,6 @@ updateAnimationFrame model =
     updateLineToDraw model
   else
     { model | tileLines = Maybe.Nothing }
-      |> updateTileDiff
 
 
 update : Msg -> Model -> Model

@@ -122,10 +122,10 @@ getUpdateCanvasCmd : (Model, Cmd Msg) -> (Model, Cmd Msg)
 getUpdateCanvasCmd (model, prevCmd) =
   if model.canvas.viewUpdated then
     let
-      curCanvas = model.canvas
-      updateCanvasCmd = updateCanvas (model.canvas.canvasView, model.canvas.tileDiff)
+      newCanvas = Canvas.updateTileDiff model.canvas
+      updateCanvasCmd = updateCanvas (newCanvas.canvasView, newCanvas.tileDiff)
     in
-      { model | canvas = { curCanvas | viewUpdated = False } }
+      { model | canvas = { newCanvas | viewUpdated = False } }
       ! [prevCmd, updateCanvasCmd]
   else
     model ! [prevCmd]
