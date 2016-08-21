@@ -134,6 +134,11 @@ function drawLine(tileLine) {
   if(typeof tileMap[i] === 'undefined' || typeof tileMap[i][j] === 'undefined') {
       return;
   }
+  //The position on the canvas on which to place the tiles
+  var canvasX = i * (tileSize / scale) - (curX / scale);
+  var canvasY = j * (tileSize / scale) - (curY / scale);
+  var canvasTileSize = tileSize / scale;
+  ctx.clearRect(canvasX, canvasY, (tileSize / scale), (tileSize / scale));
   drawTileLine(i, j, tileLine.line);
   copyTileToCanvas(i, j);
 }
@@ -162,7 +167,6 @@ function copyTileToCanvas(i, j) {
     var canvasX = i * (tileSize / scale) - (curX / scale);
     var canvasY = j * (tileSize / scale) - (curY / scale);
     var canvasTileSize = tileSize / scale;
-    ctx.clearRect(canvasX, canvasY, (tileSize / scale), (tileSize / scale));
     ctx.drawImage(tile.canvas, canvasX, canvasY, canvasTileSize, canvasTileSize);
   }
 }
@@ -212,7 +216,6 @@ function createTiles(tilesToCreate) {
     if (!tileCol[j]) {
       tileCol[j] = newTile();
     }
-    console.log("Created tile", i, j);
   });
 }
 
@@ -231,7 +234,6 @@ function removeTiles(tilesToRemove) {
       return;
     }
     tileCol[j] = null;
-    console.log("Removed tile", i, j);
   });
 }
 
@@ -249,6 +251,7 @@ function newTile() {
 }
 
 function copyFromTileMap() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   visibleTiles(function(i, j) {
     copyTileToCanvas(i, j);
   });
