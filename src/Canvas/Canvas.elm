@@ -3,7 +3,6 @@ module Canvas.Canvas exposing (..)
 import Collage
 import Element
 import Time exposing (Time)
-import Set exposing (Set)
 
 import Canvas.Ports exposing (..)
 import Canvas.Mouse as Mouse
@@ -18,8 +17,8 @@ type alias Model =
   , curColour : Colour
   , canvasView : CanvasView
   , tileLines : Maybe (List TileLine)
-  , visibleTiles : Set Tile
-  , prevVisibleTiles : Set Tile
+  , visibleTiles : List Tile
+  , prevVisibleTiles : List Tile
   , tileDiff : TileDiff
   , viewUpdated : Bool --A flag to tell whether or not to render the view for a given animation frame
   , mousePosDragStart : Position
@@ -36,8 +35,8 @@ init =
   , curColour = Colours.Black
   , canvasView = CanvasView (CanvasSize 800 600) 0 1 (Position 0 0)
   , tileLines = Maybe.Nothing
-  , visibleTiles = Set.empty
-  , prevVisibleTiles = Set.empty
+  , visibleTiles = []
+  , prevVisibleTiles = []
   , tileDiff = TileDiff [] []
   , viewUpdated = False
   , mousePosDragStart = Position 0 0
@@ -170,12 +169,15 @@ updateCanvasSize canvasSize model =
 
 updateVisibleTiles : Model -> Model
 updateVisibleTiles model =
-  let
-    visibleTiles = getVisibleTiles model.canvasView
-  in
-    {model | visibleTiles = visibleTiles }
+  if model.viewUpdated then
+    let
+      visibleTiles = getVisibleTiles model.canvasView
+    in
+      {model | visibleTiles = visibleTiles }
+  else
+    model
 
-getVisibleTiles : CanvasView -> Set Tile
+getVisibleTiles : CanvasView -> List Tile
 getVisibleTiles canvasView =
   let
     tileLeft = floor (toFloat (canvasView.curPos.x) / toFloat(tileSize))
@@ -185,7 +187,6 @@ getVisibleTiles canvasView =
     numTilesJ = floor (canvasView.scale * (toFloat canvasView.size.height) / tileSize + 1)
   in
     getTileRange tileLeft (tileLeft+numTilesI) tileTop (tileTop+numTilesJ)
-      |> Set.fromList
 
 updateTileDiff : Model -> Model
 updateTileDiff model =
@@ -194,8 +195,8 @@ updateTileDiff model =
 getTileDiff : Model -> TileDiff
 getTileDiff model =
   let
-    newTiles = Set.toList (Set.diff model.visibleTiles model.prevVisibleTiles)
-    oldTiles = Set.toList (Set.diff model.prevVisibleTiles model.visibleTiles)
+    newTiles = List.filter (\newTile -> not (List.member newTile model.prevVisibleTiles)) model.visibleTiles
+    oldTiles = List.filter (\oldTile -> not (List.member oldTile model.visibleTiles)) model.prevVisibleTiles
   in
     TileDiff newTiles oldTiles
 
