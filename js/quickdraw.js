@@ -10548,6 +10548,137 @@ var _elm_lang$core$Time$subMap = F2(
 	});
 _elm_lang$core$Native_Platform.effectManagers['Time'] = {pkg: 'elm-lang/core', init: _elm_lang$core$Time$init, onEffects: _elm_lang$core$Time$onEffects, onSelfMsg: _elm_lang$core$Time$onSelfMsg, tag: 'sub', subMap: _elm_lang$core$Time$subMap};
 
+var _elm_lang$core$Set$foldr = F3(
+	function (f, b, _p0) {
+		var _p1 = _p0;
+		return A3(
+			_elm_lang$core$Dict$foldr,
+			F3(
+				function (k, _p2, b) {
+					return A2(f, k, b);
+				}),
+			b,
+			_p1._0);
+	});
+var _elm_lang$core$Set$foldl = F3(
+	function (f, b, _p3) {
+		var _p4 = _p3;
+		return A3(
+			_elm_lang$core$Dict$foldl,
+			F3(
+				function (k, _p5, b) {
+					return A2(f, k, b);
+				}),
+			b,
+			_p4._0);
+	});
+var _elm_lang$core$Set$toList = function (_p6) {
+	var _p7 = _p6;
+	return _elm_lang$core$Dict$keys(_p7._0);
+};
+var _elm_lang$core$Set$size = function (_p8) {
+	var _p9 = _p8;
+	return _elm_lang$core$Dict$size(_p9._0);
+};
+var _elm_lang$core$Set$member = F2(
+	function (k, _p10) {
+		var _p11 = _p10;
+		return A2(_elm_lang$core$Dict$member, k, _p11._0);
+	});
+var _elm_lang$core$Set$isEmpty = function (_p12) {
+	var _p13 = _p12;
+	return _elm_lang$core$Dict$isEmpty(_p13._0);
+};
+var _elm_lang$core$Set$Set_elm_builtin = function (a) {
+	return {ctor: 'Set_elm_builtin', _0: a};
+};
+var _elm_lang$core$Set$empty = _elm_lang$core$Set$Set_elm_builtin(_elm_lang$core$Dict$empty);
+var _elm_lang$core$Set$singleton = function (k) {
+	return _elm_lang$core$Set$Set_elm_builtin(
+		A2(
+			_elm_lang$core$Dict$singleton,
+			k,
+			{ctor: '_Tuple0'}));
+};
+var _elm_lang$core$Set$insert = F2(
+	function (k, _p14) {
+		var _p15 = _p14;
+		return _elm_lang$core$Set$Set_elm_builtin(
+			A3(
+				_elm_lang$core$Dict$insert,
+				k,
+				{ctor: '_Tuple0'},
+				_p15._0));
+	});
+var _elm_lang$core$Set$fromList = function (xs) {
+	return A3(_elm_lang$core$List$foldl, _elm_lang$core$Set$insert, _elm_lang$core$Set$empty, xs);
+};
+var _elm_lang$core$Set$map = F2(
+	function (f, s) {
+		return _elm_lang$core$Set$fromList(
+			A2(
+				_elm_lang$core$List$map,
+				f,
+				_elm_lang$core$Set$toList(s)));
+	});
+var _elm_lang$core$Set$remove = F2(
+	function (k, _p16) {
+		var _p17 = _p16;
+		return _elm_lang$core$Set$Set_elm_builtin(
+			A2(_elm_lang$core$Dict$remove, k, _p17._0));
+	});
+var _elm_lang$core$Set$union = F2(
+	function (_p19, _p18) {
+		var _p20 = _p19;
+		var _p21 = _p18;
+		return _elm_lang$core$Set$Set_elm_builtin(
+			A2(_elm_lang$core$Dict$union, _p20._0, _p21._0));
+	});
+var _elm_lang$core$Set$intersect = F2(
+	function (_p23, _p22) {
+		var _p24 = _p23;
+		var _p25 = _p22;
+		return _elm_lang$core$Set$Set_elm_builtin(
+			A2(_elm_lang$core$Dict$intersect, _p24._0, _p25._0));
+	});
+var _elm_lang$core$Set$diff = F2(
+	function (_p27, _p26) {
+		var _p28 = _p27;
+		var _p29 = _p26;
+		return _elm_lang$core$Set$Set_elm_builtin(
+			A2(_elm_lang$core$Dict$diff, _p28._0, _p29._0));
+	});
+var _elm_lang$core$Set$filter = F2(
+	function (p, _p30) {
+		var _p31 = _p30;
+		return _elm_lang$core$Set$Set_elm_builtin(
+			A2(
+				_elm_lang$core$Dict$filter,
+				F2(
+					function (k, _p32) {
+						return p(k);
+					}),
+				_p31._0));
+	});
+var _elm_lang$core$Set$partition = F2(
+	function (p, _p33) {
+		var _p34 = _p33;
+		var _p35 = A2(
+			_elm_lang$core$Dict$partition,
+			F2(
+				function (k, _p36) {
+					return p(k);
+				}),
+			_p34._0);
+		var p1 = _p35._0;
+		var p2 = _p35._1;
+		return {
+			ctor: '_Tuple2',
+			_0: _elm_lang$core$Set$Set_elm_builtin(p1),
+			_1: _elm_lang$core$Set$Set_elm_builtin(p2)
+		};
+	});
+
 var _alexspurling$quickdraw$Canvas_Vector$zero = function (pos) {
 	return _elm_lang$core$Native_Utils.eq(pos.x, 0) && _elm_lang$core$Native_Utils.eq(pos.y, 0);
 };
@@ -10644,7 +10775,7 @@ var _alexspurling$quickdraw$Canvas_Ports$drawLine = _elm_lang$core$Native_Platfo
 				colour: v.line.colour,
 				width: v.line.width
 			},
-			tile: {i: v.tile.i, j: v.tile.j}
+			tile: [v.tile._0, v.tile._1]
 		};
 	});
 var _alexspurling$quickdraw$Canvas_Ports$wheel = _elm_lang$core$Native_Platform.incomingPort(
@@ -10678,12 +10809,24 @@ var _alexspurling$quickdraw$Canvas_Ports$wheel = _elm_lang$core$Native_Platform.
 var _alexspurling$quickdraw$Canvas_Ports$updateCanvas = _elm_lang$core$Native_Platform.outgoingPort(
 	'updateCanvas',
 	function (v) {
-		return {
-			size: {width: v.size.width, height: v.size.height},
-			zoom: v.zoom,
-			scale: v.scale,
-			curPos: {x: v.curPos.x, y: v.curPos.y}
-		};
+		return [
+			{
+			size: {width: v._0.size.width, height: v._0.size.height},
+			zoom: v._0.zoom,
+			scale: v._0.scale,
+			curPos: {x: v._0.curPos.x, y: v._0.curPos.y}
+		},
+			{
+			newTiles: _elm_lang$core$Native_List.toArray(v._1.newTiles).map(
+				function (v) {
+					return [v._0, v._1];
+				}),
+			oldTiles: _elm_lang$core$Native_List.toArray(v._1.oldTiles).map(
+				function (v) {
+					return [v._0, v._1];
+				})
+		}
+		];
 	});
 var _alexspurling$quickdraw$Canvas_Ports$canvasResized = _elm_lang$core$Native_Platform.incomingPort(
 	'canvasResized',
@@ -10719,13 +10862,13 @@ var _alexspurling$quickdraw$Canvas_Ports$CanvasSize = F2(
 	function (a, b) {
 		return {width: a, height: b};
 	});
-var _alexspurling$quickdraw$Canvas_Ports$Tile = F2(
-	function (a, b) {
-		return {i: a, j: b};
-	});
-var _alexspurling$quickdraw$Canvas_Ports$LineWithTile = F2(
+var _alexspurling$quickdraw$Canvas_Ports$TileLine = F2(
 	function (a, b) {
 		return {line: a, tile: b};
+	});
+var _alexspurling$quickdraw$Canvas_Ports$TileDiff = F2(
+	function (a, b) {
+		return {newTiles: a, oldTiles: b};
 	});
 
 var _alexspurling$quickdraw$Canvas_Mouse$calculateMidPosition = F2(
@@ -10864,8 +11007,52 @@ var _alexspurling$quickdraw$Canvas_Canvas$getScaledPos = F2(
 			A2(_alexspurling$quickdraw$Canvas_Vector$multiply, pos, canvasView.scale),
 			canvasView.curPos);
 	});
+var _alexspurling$quickdraw$Canvas_Canvas$getTileRange = F4(
+	function (minI, maxI, minJ, maxJ) {
+		var createTilesWithI = F2(
+			function (js, i) {
+				return A2(
+					_elm_lang$core$List$map,
+					F2(
+						function (v0, v1) {
+							return {ctor: '_Tuple2', _0: v0, _1: v1};
+						})(i),
+					js);
+			});
+		var rangeJ = _elm_lang$core$Native_List.range(minJ, maxJ);
+		var rangeI = _elm_lang$core$Native_List.range(minI, maxI);
+		return A2(
+			_elm_lang$core$List$concatMap,
+			createTilesWithI(rangeJ),
+			rangeI);
+	});
+var _alexspurling$quickdraw$Canvas_Canvas$getTileDiff = function (model) {
+	var oldTiles = A2(
+		_elm_lang$core$List$filter,
+		function (oldTile) {
+			return _elm_lang$core$Basics$not(
+				A2(_elm_lang$core$List$member, oldTile, model.visibleTiles));
+		},
+		model.prevVisibleTiles);
+	var newTiles = A2(
+		_elm_lang$core$List$filter,
+		function (newTile) {
+			return _elm_lang$core$Basics$not(
+				A2(_elm_lang$core$List$member, newTile, model.prevVisibleTiles));
+		},
+		model.visibleTiles);
+	return A2(_alexspurling$quickdraw$Canvas_Ports$TileDiff, newTiles, oldTiles);
+};
+var _alexspurling$quickdraw$Canvas_Canvas$updateTileDiff = function (model) {
+	return _elm_lang$core$Native_Utils.update(
+		model,
+		{
+			tileDiff: _alexspurling$quickdraw$Canvas_Canvas$getTileDiff(model),
+			prevVisibleTiles: model.visibleTiles
+		});
+};
 var _alexspurling$quickdraw$Canvas_Canvas$updateCanvasSize = F2(
-	function (model, canvasSize) {
+	function (canvasSize, model) {
 		var curCanvasView = model.canvasView;
 		var newCanvasView = _elm_lang$core$Native_Utils.update(
 			curCanvasView,
@@ -10875,11 +11062,11 @@ var _alexspurling$quickdraw$Canvas_Canvas$updateCanvasSize = F2(
 			{canvasView: newCanvasView, viewUpdated: true});
 	});
 var _alexspurling$quickdraw$Canvas_Canvas$updateZoom = F3(
-	function (model, delta, mousePos) {
+	function (delta, mousePos, model) {
 		var curCanvasView = model.canvasView;
 		var zoom = A3(_elm_lang$core$Basics$clamp, 0, 3000, model.canvasView.zoom + delta);
 		var scale = Math.pow(2, zoom / 1000);
-		var drawMode = model.selectedDrawMode && (_elm_lang$core$Native_Utils.cmp(zoom, 500) < 1);
+		var drawMode = model.selectedDrawMode && (_elm_lang$core$Native_Utils.cmp(zoom, 5000) < 1);
 		var scaledCanvasPos = A2(_alexspurling$quickdraw$Canvas_Canvas$getScaledPos, model.canvasView, mousePos);
 		var curPos = A2(
 			_alexspurling$quickdraw$Canvas_Vector$minus,
@@ -10919,22 +11106,27 @@ var _alexspurling$quickdraw$Canvas_Canvas$updateMouse = F2(
 			model,
 			{mouse: newMouse, mouseDown: event.mouseDown});
 	});
-var _alexspurling$quickdraw$Canvas_Canvas$updateLineToDraw = function (model) {
-	var lineToDraw = A3(
-		_alexspurling$quickdraw$Canvas_Mouse$getLine,
-		model.mouse,
-		_alexspurling$quickdraw$Canvas_Colours$toHex(model.curColour),
-		model.lineWidth);
-	var newMouse = A2(
-		_alexspurling$quickdraw$Canvas_Mouse$update,
-		_alexspurling$quickdraw$Canvas_Mouse$UpdatePrevPositions(lineToDraw.lineMid),
-		model.mouse);
-	return _elm_lang$core$Native_Utils.update(
-		model,
-		{
-			mouse: newMouse,
-			lineToDraw: _elm_lang$core$Maybe$Just(lineToDraw)
-		});
+var _alexspurling$quickdraw$Canvas_Canvas$tileSize = 400;
+var _alexspurling$quickdraw$Canvas_Canvas$getVisibleTiles = function (canvasView) {
+	var numTilesJ = _elm_lang$core$Basics$floor(
+		((canvasView.scale * _elm_lang$core$Basics$toFloat(canvasView.size.height)) / _alexspurling$quickdraw$Canvas_Canvas$tileSize) + 1);
+	var numTilesI = _elm_lang$core$Basics$floor(
+		((canvasView.scale * _elm_lang$core$Basics$toFloat(canvasView.size.width)) / _alexspurling$quickdraw$Canvas_Canvas$tileSize) + 1);
+	var tileTop = _elm_lang$core$Basics$floor(
+		_elm_lang$core$Basics$toFloat(canvasView.curPos.y) / _elm_lang$core$Basics$toFloat(_alexspurling$quickdraw$Canvas_Canvas$tileSize));
+	var tileLeft = _elm_lang$core$Basics$floor(
+		_elm_lang$core$Basics$toFloat(canvasView.curPos.x) / _elm_lang$core$Basics$toFloat(_alexspurling$quickdraw$Canvas_Canvas$tileSize));
+	return A4(_alexspurling$quickdraw$Canvas_Canvas$getTileRange, tileLeft, tileLeft + numTilesI, tileTop, tileTop + numTilesJ);
+};
+var _alexspurling$quickdraw$Canvas_Canvas$updateVisibleTiles = function (model) {
+	if (model.viewUpdated) {
+		var visibleTiles = _alexspurling$quickdraw$Canvas_Canvas$getVisibleTiles(model.canvasView);
+		return _elm_lang$core$Native_Utils.update(
+			model,
+			{visibleTiles: visibleTiles});
+	} else {
+		return model;
+	}
 };
 var _alexspurling$quickdraw$Canvas_Canvas$update = F2(
 	function (msg, model) {
@@ -10942,10 +11134,11 @@ var _alexspurling$quickdraw$Canvas_Canvas$update = F2(
 		switch (_p0.ctor) {
 			case 'CanvasMouseMoved':
 				var _p1 = _p0._0;
-				return A2(
-					_alexspurling$quickdraw$Canvas_Canvas$updateDrag,
-					_p1.mousePos,
-					A2(_alexspurling$quickdraw$Canvas_Canvas$updateMouse, _p1, model));
+				return _alexspurling$quickdraw$Canvas_Canvas$updateVisibleTiles(
+					A2(
+						_alexspurling$quickdraw$Canvas_Canvas$updateDrag,
+						_p1.mousePos,
+						A2(_alexspurling$quickdraw$Canvas_Canvas$updateMouse, _p1, model)));
 			case 'CanvasMouseDown':
 				return _elm_lang$core$Native_Utils.update(
 					model,
@@ -10959,10 +11152,12 @@ var _alexspurling$quickdraw$Canvas_Canvas$update = F2(
 					model,
 					{curColour: _p0._0});
 			case 'CanvasResized':
-				return A2(_alexspurling$quickdraw$Canvas_Canvas$updateCanvasSize, model, _p0._0);
+				return _alexspurling$quickdraw$Canvas_Canvas$updateVisibleTiles(
+					A2(_alexspurling$quickdraw$Canvas_Canvas$updateCanvasSize, _p0._0, model));
 			case 'Wheel':
 				var _p2 = _p0._0;
-				return A3(_alexspurling$quickdraw$Canvas_Canvas$updateZoom, model, _p2.delta, _p2.mousePos);
+				return _alexspurling$quickdraw$Canvas_Canvas$updateVisibleTiles(
+					A3(_alexspurling$quickdraw$Canvas_Canvas$updateZoom, _p2.delta, _p2.mousePos, model));
 			case 'ToggleDrawMode':
 				var selectedDrawMode = _elm_lang$core$Basics$not(model.selectedDrawMode);
 				return _elm_lang$core$Native_Utils.update(
@@ -10974,12 +11169,26 @@ var _alexspurling$quickdraw$Canvas_Canvas$update = F2(
 					{lineWidth: _p0._0});
 		}
 	});
-var _alexspurling$quickdraw$Canvas_Canvas$updateAnimationFrame = function (model) {
-	return (model.mouseDown && model.drawMode) ? _alexspurling$quickdraw$Canvas_Canvas$updateLineToDraw(model) : _elm_lang$core$Native_Utils.update(
-		model,
-		{lineToDraw: _elm_lang$core$Maybe$Nothing});
-};
-var _alexspurling$quickdraw$Canvas_Canvas$tileSize = 400;
+var _alexspurling$quickdraw$Canvas_Canvas$getPosOnTile = F3(
+	function (canvasView, pos, _p3) {
+		var _p4 = _p3;
+		var tilePos = A2(
+			_alexspurling$quickdraw$Canvas_Vector$multiply,
+			A2(_alexspurling$quickdraw$Canvas_Vector$Position, _p4._0, _p4._1),
+			_alexspurling$quickdraw$Canvas_Canvas$tileSize);
+		var scaledPos = A2(_alexspurling$quickdraw$Canvas_Canvas$getScaledPos, canvasView, pos);
+		return A2(_alexspurling$quickdraw$Canvas_Vector$minus, scaledPos, tilePos);
+	});
+var _alexspurling$quickdraw$Canvas_Canvas$getTileLine = F3(
+	function (canvasView, line, tile) {
+		var lineMid = A3(_alexspurling$quickdraw$Canvas_Canvas$getPosOnTile, canvasView, line.lineMid, tile);
+		var lineFrom = A3(_alexspurling$quickdraw$Canvas_Canvas$getPosOnTile, canvasView, line.lineFrom, tile);
+		var lastMid = A3(_alexspurling$quickdraw$Canvas_Canvas$getPosOnTile, canvasView, line.lastMid, tile);
+		return A2(
+			_alexspurling$quickdraw$Canvas_Ports$TileLine,
+			A5(_alexspurling$quickdraw$Canvas_Ports$Line, lastMid, lineFrom, lineMid, line.colour, line.width),
+			tile);
+	});
 var _alexspurling$quickdraw$Canvas_Canvas$tileAt = F2(
 	function (canvasView, pos) {
 		var scaledCanvasPos = A2(_alexspurling$quickdraw$Canvas_Canvas$getScaledPos, canvasView, pos);
@@ -10987,40 +11196,55 @@ var _alexspurling$quickdraw$Canvas_Canvas$tileAt = F2(
 			_elm_lang$core$Basics$toFloat(scaledCanvasPos.x) / _elm_lang$core$Basics$toFloat(_alexspurling$quickdraw$Canvas_Canvas$tileSize));
 		var j = _elm_lang$core$Basics$floor(
 			_elm_lang$core$Basics$toFloat(scaledCanvasPos.y) / _elm_lang$core$Basics$toFloat(_alexspurling$quickdraw$Canvas_Canvas$tileSize));
-		return A2(_alexspurling$quickdraw$Canvas_Ports$Tile, i, j);
+		return {ctor: '_Tuple2', _0: i, _1: j};
 	});
 var _alexspurling$quickdraw$Canvas_Canvas$getTilesForLine = F2(
 	function (line, canvasView) {
-		var createTilesWithI = F2(
-			function (js, i) {
-				return A2(
-					_elm_lang$core$List$map,
-					_alexspurling$quickdraw$Canvas_Ports$Tile(i),
-					js);
-			});
-		var tileCurveTo = A2(_alexspurling$quickdraw$Canvas_Canvas$tileAt, canvasView, line.lineMid);
-		var tileCurveMid = A2(_alexspurling$quickdraw$Canvas_Canvas$tileAt, canvasView, line.lineFrom);
-		var tileCurveFrom = A2(_alexspurling$quickdraw$Canvas_Canvas$tileAt, canvasView, line.lastMid);
-		var minI = A3(_alexspurling$quickdraw$Canvas_Canvas$min3, tileCurveFrom.i, tileCurveMid.i, tileCurveTo.i);
-		var maxI = A3(_alexspurling$quickdraw$Canvas_Canvas$max3, tileCurveFrom.i, tileCurveMid.i, tileCurveTo.i);
-		var rangeI = _elm_lang$core$Native_List.range(minI, maxI);
-		var minJ = A3(_alexspurling$quickdraw$Canvas_Canvas$min3, tileCurveFrom.j, tileCurveMid.j, tileCurveTo.j);
-		var maxJ = A3(_alexspurling$quickdraw$Canvas_Canvas$max3, tileCurveFrom.j, tileCurveMid.j, tileCurveTo.j);
-		var rangeJ = _elm_lang$core$Native_List.range(minJ, maxJ);
-		return A2(
-			_elm_lang$core$List$concatMap,
-			createTilesWithI(rangeJ),
-			rangeI);
+		var _p5 = A2(_alexspurling$quickdraw$Canvas_Canvas$tileAt, canvasView, line.lineMid);
+		var tileToI = _p5._0;
+		var tileToJ = _p5._1;
+		var _p6 = A2(_alexspurling$quickdraw$Canvas_Canvas$tileAt, canvasView, line.lineFrom);
+		var tileMidI = _p6._0;
+		var tileMidJ = _p6._1;
+		var _p7 = A2(_alexspurling$quickdraw$Canvas_Canvas$tileAt, canvasView, line.lastMid);
+		var tileFromI = _p7._0;
+		var tileFromJ = _p7._1;
+		var minI = A3(_alexspurling$quickdraw$Canvas_Canvas$min3, tileFromI, tileMidI, tileToI);
+		var maxI = A3(_alexspurling$quickdraw$Canvas_Canvas$max3, tileFromI, tileMidI, tileToI);
+		var minJ = A3(_alexspurling$quickdraw$Canvas_Canvas$min3, tileFromJ, tileMidJ, tileToJ);
+		var maxJ = A3(_alexspurling$quickdraw$Canvas_Canvas$max3, tileFromJ, tileMidJ, tileToJ);
+		return A4(_alexspurling$quickdraw$Canvas_Canvas$getTileRange, minI, maxI, minJ, maxJ);
 	});
-var _alexspurling$quickdraw$Canvas_Canvas$getLineWithTiles = F2(
+var _alexspurling$quickdraw$Canvas_Canvas$getTileLines = F2(
 	function (lineToDraw, canvasView) {
 		return A2(
 			_elm_lang$core$List$map,
-			function (tile) {
-				return A2(_alexspurling$quickdraw$Canvas_Ports$LineWithTile, lineToDraw, tile);
-			},
+			A2(_alexspurling$quickdraw$Canvas_Canvas$getTileLine, canvasView, lineToDraw),
 			A2(_alexspurling$quickdraw$Canvas_Canvas$getTilesForLine, lineToDraw, canvasView));
 	});
+var _alexspurling$quickdraw$Canvas_Canvas$updateLineToDraw = function (model) {
+	var lineToDraw = A3(
+		_alexspurling$quickdraw$Canvas_Mouse$getLine,
+		model.mouse,
+		_alexspurling$quickdraw$Canvas_Colours$toHex(model.curColour),
+		model.lineWidth);
+	var newMouse = A2(
+		_alexspurling$quickdraw$Canvas_Mouse$update,
+		_alexspurling$quickdraw$Canvas_Mouse$UpdatePrevPositions(lineToDraw.lineMid),
+		model.mouse);
+	var tileLines = A2(_alexspurling$quickdraw$Canvas_Canvas$getTileLines, lineToDraw, model.canvasView);
+	return _elm_lang$core$Native_Utils.update(
+		model,
+		{
+			mouse: newMouse,
+			tileLines: _elm_lang$core$Maybe$Just(tileLines)
+		});
+};
+var _alexspurling$quickdraw$Canvas_Canvas$updateAnimationFrame = function (model) {
+	return (model.mouseDown && model.drawMode) ? _alexspurling$quickdraw$Canvas_Canvas$updateLineToDraw(model) : _elm_lang$core$Native_Utils.update(
+		model,
+		{tileLines: _elm_lang$core$Maybe$Nothing});
+};
 var _alexspurling$quickdraw$Canvas_Canvas$init = {
 	ctor: '_Tuple2',
 	_0: {
@@ -11033,7 +11257,17 @@ var _alexspurling$quickdraw$Canvas_Canvas$init = {
 			0,
 			1,
 			A2(_alexspurling$quickdraw$Canvas_Vector$Position, 0, 0)),
-		lineToDraw: _elm_lang$core$Maybe$Nothing,
+		tileLines: _elm_lang$core$Maybe$Nothing,
+		visibleTiles: _elm_lang$core$Native_List.fromArray(
+			[]),
+		prevVisibleTiles: _elm_lang$core$Native_List.fromArray(
+			[]),
+		tileDiff: A2(
+			_alexspurling$quickdraw$Canvas_Ports$TileDiff,
+			_elm_lang$core$Native_List.fromArray(
+				[]),
+			_elm_lang$core$Native_List.fromArray(
+				[])),
 		viewUpdated: false,
 		mousePosDragStart: A2(_alexspurling$quickdraw$Canvas_Vector$Position, 0, 0),
 		gridPosDragStart: A2(_alexspurling$quickdraw$Canvas_Vector$Position, 0, 0),
@@ -11055,7 +11289,13 @@ var _alexspurling$quickdraw$Canvas_Canvas$Model = function (a) {
 								return function (i) {
 									return function (j) {
 										return function (k) {
-											return {mouse: a, mouseDown: b, curColour: c, canvasView: d, lineToDraw: e, viewUpdated: f, mousePosDragStart: g, gridPosDragStart: h, drawMode: i, selectedDrawMode: j, lineWidth: k};
+											return function (l) {
+												return function (m) {
+													return function (n) {
+														return {mouse: a, mouseDown: b, curColour: c, canvasView: d, tileLines: e, visibleTiles: f, prevVisibleTiles: g, tileDiff: h, viewUpdated: i, mousePosDragStart: j, gridPosDragStart: k, drawMode: l, selectedDrawMode: m, lineWidth: n};
+													};
+												};
+											};
 										};
 									};
 								};
@@ -11093,7 +11333,7 @@ var _alexspurling$quickdraw$Canvas_Canvas$subscriptions = _elm_lang$core$Platfor
 			_alexspurling$quickdraw$Canvas_Ports$canvasMouseMoved(_alexspurling$quickdraw$Canvas_Canvas$CanvasMouseMoved),
 			_alexspurling$quickdraw$Canvas_Ports$canvasMouseDown(_alexspurling$quickdraw$Canvas_Canvas$CanvasMouseDown),
 			_alexspurling$quickdraw$Canvas_Ports$canvasMouseUp(
-			function (_p3) {
+			function (_p8) {
 				return _alexspurling$quickdraw$Canvas_Canvas$CanvasMouseUp;
 			}),
 			_alexspurling$quickdraw$Canvas_Ports$wheel(_alexspurling$quickdraw$Canvas_Canvas$Wheel),
@@ -13472,6 +13712,29 @@ var _fbonetti$elm_phoenix_socket$Phoenix_Socket$listen = F2(
 				]));
 	});
 
+var _alexspurling$quickdraw$Main$fpsDiv = function (model) {
+	return A2(
+		_elm_lang$html$Html$div,
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_elm_lang$html$Html_Attributes$id('fps'),
+				_elm_lang$html$Html_Attributes$style(
+				_elm_lang$core$Native_List.fromArray(
+					[
+						{ctor: '_Tuple2', _0: 'position', _1: 'absolute'},
+						{ctor: '_Tuple2', _0: 'top', _1: '20px'},
+						{ctor: '_Tuple2', _0: 'right', _1: '20px'}
+					]))
+			]),
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_elm_lang$html$Html$text(
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					'Fps: ',
+					_elm_lang$core$Basics$toString(model.fps)))
+			]));
+};
 var _alexspurling$quickdraw$Main$debugDivStyle = _elm_lang$core$Native_List.fromArray(
 	[
 		{ctor: '_Tuple2', _0: 'position', _1: 'absolute'},
@@ -13499,10 +13762,13 @@ var _alexspurling$quickdraw$Main$canvasClass = F2(
 		return drawMode ? 'draw' : (dragging ? 'dragging' : 'drag');
 	});
 var _alexspurling$quickdraw$Main$tileDecoder = A3(
-	_elm_lang$core$Json_Decode$object2,
-	_alexspurling$quickdraw$Canvas_Ports$Tile,
-	A2(_elm_lang$core$Json_Decode_ops[':='], 'i', _elm_lang$core$Json_Decode$int),
-	A2(_elm_lang$core$Json_Decode_ops[':='], 'j', _elm_lang$core$Json_Decode$int));
+	_elm_lang$core$Json_Decode$tuple2,
+	F2(
+		function (v0, v1) {
+			return {ctor: '_Tuple2', _0: v0, _1: v1};
+		}),
+	_elm_lang$core$Json_Decode$int,
+	_elm_lang$core$Json_Decode$int);
 var _alexspurling$quickdraw$Main$positionDecoder = A3(
 	_elm_lang$core$Json_Decode$object2,
 	_alexspurling$quickdraw$Canvas_Vector$Position,
@@ -13516,25 +13782,19 @@ var _alexspurling$quickdraw$Main$lineDecoder = A6(
 	A2(_elm_lang$core$Json_Decode_ops[':='], 'lineMid', _alexspurling$quickdraw$Main$positionDecoder),
 	A2(_elm_lang$core$Json_Decode_ops[':='], 'colour', _elm_lang$core$Json_Decode$string),
 	A2(_elm_lang$core$Json_Decode_ops[':='], 'width', _elm_lang$core$Json_Decode$int));
-var _alexspurling$quickdraw$Main$lineWithTileDecoder = A3(
+var _alexspurling$quickdraw$Main$tileLineDecoder = A3(
 	_elm_lang$core$Json_Decode$object2,
-	_alexspurling$quickdraw$Canvas_Ports$LineWithTile,
+	_alexspurling$quickdraw$Canvas_Ports$TileLine,
 	A2(_elm_lang$core$Json_Decode_ops[':='], 'line', _alexspurling$quickdraw$Main$lineDecoder),
 	A2(_elm_lang$core$Json_Decode_ops[':='], 'tile', _alexspurling$quickdraw$Main$tileDecoder));
-var _alexspurling$quickdraw$Main$encodeTile = function (tile) {
-	return _elm_lang$core$Json_Encode$object(
+var _alexspurling$quickdraw$Main$linesOnTilesDecoder = _elm_lang$core$Json_Decode$list(_alexspurling$quickdraw$Main$tileLineDecoder);
+var _alexspurling$quickdraw$Main$encodeTile = function (_p0) {
+	var _p1 = _p0;
+	return _elm_lang$core$Json_Encode$list(
 		_elm_lang$core$Native_List.fromArray(
 			[
-				{
-				ctor: '_Tuple2',
-				_0: 'i',
-				_1: _elm_lang$core$Json_Encode$int(tile.i)
-			},
-				{
-				ctor: '_Tuple2',
-				_0: 'j',
-				_1: _elm_lang$core$Json_Encode$int(tile.j)
-			}
+				_elm_lang$core$Json_Encode$int(_p1._0),
+				_elm_lang$core$Json_Encode$int(_p1._1)
 			]));
 };
 var _alexspurling$quickdraw$Main$encodePosition = function (pos) {
@@ -13584,30 +13844,94 @@ var _alexspurling$quickdraw$Main$encodeLine = function (line) {
 			}
 			]));
 };
-var _alexspurling$quickdraw$Main$encodeLineWithTile = function (lineWithTile) {
+var _alexspurling$quickdraw$Main$encodeTileLine = function (tileLine) {
 	return _elm_lang$core$Json_Encode$object(
 		_elm_lang$core$Native_List.fromArray(
 			[
 				{
 				ctor: '_Tuple2',
 				_0: 'line',
-				_1: _alexspurling$quickdraw$Main$encodeLine(lineWithTile.line)
+				_1: _alexspurling$quickdraw$Main$encodeLine(tileLine.line)
 			},
 				{
 				ctor: '_Tuple2',
 				_0: 'tile',
-				_1: _alexspurling$quickdraw$Main$encodeTile(lineWithTile.tile)
+				_1: _alexspurling$quickdraw$Main$encodeTile(tileLine.tile)
 			}
 			]));
 };
-var _alexspurling$quickdraw$Main$socketServer = 'ws://localhost:4000/socket/websocket';
-var _alexspurling$quickdraw$Main$Model = F2(
-	function (a, b) {
-		return {phxSocket: a, canvas: b};
-	});
-var _alexspurling$quickdraw$Main$JoinedChannel = function (a) {
-	return {ctor: 'JoinedChannel', _0: a};
+var _alexspurling$quickdraw$Main$encodeTileLines = function (tileLines) {
+	return _elm_lang$core$Json_Encode$list(
+		A2(_elm_lang$core$List$map, _alexspurling$quickdraw$Main$encodeTileLine, tileLines));
 };
+var _alexspurling$quickdraw$Main$getChannelForTile = function (_p2) {
+	var _p3 = _p2;
+	return A2(
+		_elm_lang$core$Basics_ops['++'],
+		'tile:',
+		A2(
+			_elm_lang$core$Basics_ops['++'],
+			_elm_lang$core$Basics$toString(_p3._0),
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				'-',
+				_elm_lang$core$Basics$toString(_p3._1))));
+};
+var _alexspurling$quickdraw$Main$getUpdateCanvasCmd = function (_p4) {
+	var _p5 = _p4;
+	var _p7 = _p5._1;
+	var _p6 = _p5._0;
+	if (_p6.canvas.viewUpdated) {
+		var newCanvas = _alexspurling$quickdraw$Canvas_Canvas$updateTileDiff(_p6.canvas);
+		var updateCanvasCmd = _alexspurling$quickdraw$Canvas_Ports$updateCanvas(
+			{ctor: '_Tuple2', _0: newCanvas.canvasView, _1: newCanvas.tileDiff});
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			_elm_lang$core$Native_Utils.update(
+				_p6,
+				{
+					canvas: _elm_lang$core$Native_Utils.update(
+						newCanvas,
+						{viewUpdated: false})
+				}),
+			_elm_lang$core$Native_List.fromArray(
+				[_p7, updateCanvasCmd]));
+	} else {
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			_p6,
+			_elm_lang$core$Native_List.fromArray(
+				[_p7]));
+	}
+};
+var _alexspurling$quickdraw$Main$getDrawCmd = function (model) {
+	var _p8 = model.canvas.tileLines;
+	if (_p8.ctor === 'Just') {
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			model,
+			A2(_elm_lang$core$List$map, _alexspurling$quickdraw$Canvas_Ports$drawLine, _p8._0));
+	} else {
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			model,
+			_elm_lang$core$Native_List.fromArray(
+				[]));
+	}
+};
+var _alexspurling$quickdraw$Main$updateFrames = F2(
+	function (time, model) {
+		return (_elm_lang$core$Native_Utils.cmp(time - model.time, _elm_lang$core$Time$second) > 0) ? _elm_lang$core$Native_Utils.update(
+			model,
+			{time: time, fps: model.frames, frames: 0}) : _elm_lang$core$Native_Utils.update(
+			model,
+			{frames: model.frames + 1});
+	});
+var _alexspurling$quickdraw$Main$socketServer = 'ws://localhost:4000/socket/websocket';
+var _alexspurling$quickdraw$Main$Model = F5(
+	function (a, b, c, d, e) {
+		return {phxSocket: a, canvas: b, frames: c, fps: d, time: e};
+	});
 var _alexspurling$quickdraw$Main$ReceiveChatMessage = function (a) {
 	return {ctor: 'ReceiveChatMessage', _0: a};
 };
@@ -13616,113 +13940,158 @@ var _alexspurling$quickdraw$Main$initPhxSocket = A4(
 	'new:msg',
 	'room:lobby',
 	_alexspurling$quickdraw$Main$ReceiveChatMessage,
-	A4(
-		_fbonetti$elm_phoenix_socket$Phoenix_Socket$on,
-		'join',
-		'room:lobby',
-		_alexspurling$quickdraw$Main$JoinedChannel,
-		_fbonetti$elm_phoenix_socket$Phoenix_Socket$withDebug(
-			_fbonetti$elm_phoenix_socket$Phoenix_Socket$init(_alexspurling$quickdraw$Main$socketServer))));
+	_fbonetti$elm_phoenix_socket$Phoenix_Socket$withDebug(
+		_fbonetti$elm_phoenix_socket$Phoenix_Socket$init(_alexspurling$quickdraw$Main$socketServer)));
 var _alexspurling$quickdraw$Main$PhoenixMsg = function (a) {
 	return {ctor: 'PhoenixMsg', _0: a};
 };
-var _alexspurling$quickdraw$Main$joinChannel = function (phxSocket) {
-	var channel = _fbonetti$elm_phoenix_socket$Phoenix_Channel$init('room:lobby');
-	var _p0 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$join, channel, phxSocket);
-	var newPhxSocket = _p0._0;
-	var phxCmd = _p0._1;
-	return {
-		ctor: '_Tuple2',
-		_0: newPhxSocket,
-		_1: A2(_elm_lang$core$Platform_Cmd$map, _alexspurling$quickdraw$Main$PhoenixMsg, phxCmd)
-	};
-};
-var _alexspurling$quickdraw$Main$initPhoenix = _alexspurling$quickdraw$Main$joinChannel(_alexspurling$quickdraw$Main$initPhxSocket);
 var _alexspurling$quickdraw$Main$sendDraw = F2(
-	function (phxSocket, line) {
+	function (tileLine, _p9) {
+		var _p10 = _p9;
+		var channel = _alexspurling$quickdraw$Main$getChannelForTile(tileLine.tile);
 		var payload = _elm_lang$core$Json_Encode$object(
 			_elm_lang$core$Native_List.fromArray(
 				[
 					{
 					ctor: '_Tuple2',
 					_0: 'body',
-					_1: _alexspurling$quickdraw$Main$encodeLine(line)
+					_1: _alexspurling$quickdraw$Main$encodeTileLine(tileLine)
 				}
 				]));
-		var push$ = A2(
+		var push = A2(
 			_fbonetti$elm_phoenix_socket$Phoenix_Push$withPayload,
 			payload,
-			A2(_fbonetti$elm_phoenix_socket$Phoenix_Push$init, 'new:msg', 'room:lobby'));
-		var _p1 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$push, push$, phxSocket);
-		var newPhxSocket = _p1._0;
-		var phxCmd = _p1._1;
-		return {
-			ctor: '_Tuple2',
-			_0: newPhxSocket,
-			_1: A2(_elm_lang$core$Platform_Cmd$map, _alexspurling$quickdraw$Main$PhoenixMsg, phxCmd)
-		};
+			A2(_fbonetti$elm_phoenix_socket$Phoenix_Push$init, 'new:msg', channel));
+		var _p11 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$push, push, _p10._0);
+		var newPhxSocket = _p11._0;
+		var phxCmd = _p11._1;
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			newPhxSocket,
+			_elm_lang$core$Native_List.fromArray(
+				[
+					_p10._1,
+					A2(_elm_lang$core$Platform_Cmd$map, _alexspurling$quickdraw$Main$PhoenixMsg, phxCmd)
+				]));
 	});
+var _alexspurling$quickdraw$Main$getSendDrawCmd = function (_p12) {
+	var _p13 = _p12;
+	var _p17 = _p13._1;
+	var _p16 = _p13._0;
+	var _p14 = _p16.canvas.tileLines;
+	if (_p14.ctor === 'Just') {
+		var _p15 = A3(
+			_elm_lang$core$List$foldl,
+			_alexspurling$quickdraw$Main$sendDraw,
+			{ctor: '_Tuple2', _0: _p16.phxSocket, _1: _elm_lang$core$Platform_Cmd$none},
+			_p14._0);
+		var phxSocket = _p15._0;
+		var phxCmd = _p15._1;
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			_elm_lang$core$Native_Utils.update(
+				_p16,
+				{phxSocket: phxSocket}),
+			_elm_lang$core$Native_List.fromArray(
+				[_p17, phxCmd]));
+	} else {
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			_p16,
+			_elm_lang$core$Native_List.fromArray(
+				[_p17]));
+	}
+};
+var _alexspurling$quickdraw$Main$joinChannel = F2(
+	function (channelToJoin, _p18) {
+		var _p19 = _p18;
+		var channel = _fbonetti$elm_phoenix_socket$Phoenix_Channel$init(channelToJoin);
+		var _p20 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$join, channel, _p19._0);
+		var newPhxSocket = _p20._0;
+		var phxCmd = _p20._1;
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			newPhxSocket,
+			_elm_lang$core$Native_List.fromArray(
+				[
+					_p19._1,
+					A2(_elm_lang$core$Platform_Cmd$map, _alexspurling$quickdraw$Main$PhoenixMsg, phxCmd)
+				]));
+	});
+var _alexspurling$quickdraw$Main$leaveChannel = F2(
+	function (channelToLeave, _p21) {
+		var _p22 = _p21;
+		var _p23 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$leave, channelToLeave, _p22._0);
+		var newPhxSocket = _p23._0;
+		var phxCmd = _p23._1;
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			newPhxSocket,
+			_elm_lang$core$Native_List.fromArray(
+				[
+					_p22._1,
+					A2(_elm_lang$core$Platform_Cmd$map, _alexspurling$quickdraw$Main$PhoenixMsg, phxCmd)
+				]));
+	});
+var _alexspurling$quickdraw$Main$getJoinLeaveCmd = function (_p24) {
+	var _p25 = _p24;
+	var _p28 = _p25._0;
+	var channelsToLeave = A2(_elm_lang$core$List$map, _alexspurling$quickdraw$Main$getChannelForTile, _p28.canvas.tileDiff.oldTiles);
+	var channelsToJoin = A2(_elm_lang$core$List$map, _alexspurling$quickdraw$Main$getChannelForTile, _p28.canvas.tileDiff.newTiles);
+	var _p26 = A3(
+		_elm_lang$core$List$foldl,
+		_alexspurling$quickdraw$Main$joinChannel,
+		{ctor: '_Tuple2', _0: _p28.phxSocket, _1: _elm_lang$core$Platform_Cmd$none},
+		channelsToJoin);
+	var phxSocket1 = _p26._0;
+	var phxCmd1 = _p26._1;
+	var _p27 = A3(
+		_elm_lang$core$List$foldl,
+		_alexspurling$quickdraw$Main$leaveChannel,
+		{ctor: '_Tuple2', _0: phxSocket1, _1: phxCmd1},
+		channelsToLeave);
+	var phxSocket2 = _p27._0;
+	var phxCmd2 = _p27._1;
+	return A2(
+		_elm_lang$core$Platform_Cmd_ops['!'],
+		_elm_lang$core$Native_Utils.update(
+			_p28,
+			{phxSocket: phxSocket2}),
+		_elm_lang$core$Native_List.fromArray(
+			[_p25._1, phxCmd2]));
+};
 var _alexspurling$quickdraw$Main$update = F2(
 	function (msg, model) {
-		var _p2 = msg;
-		switch (_p2.ctor) {
+		var _p29 = msg;
+		switch (_p29.ctor) {
 			case 'AnimationFrame':
-				var newCanvas = _alexspurling$quickdraw$Canvas_Canvas$updateAnimationFrame(model.canvas);
-				var _p3 = function () {
-					var _p4 = newCanvas.lineToDraw;
-					if (_p4.ctor === 'Just') {
-						var _p6 = _p4._0;
-						var _p5 = A2(_alexspurling$quickdraw$Main$sendDraw, model.phxSocket, _p6);
-						var phxSocket = _p5._0;
-						var phxCmd = _p5._1;
-						var linesWithTiles = _alexspurling$quickdraw$Canvas_Canvas$getLineWithTiles;
-						var drawCmds = A2(
-							_elm_lang$core$List$map,
-							_alexspurling$quickdraw$Canvas_Ports$drawLine,
-							A2(linesWithTiles, _p6, newCanvas.canvasView));
-						return A2(
-							_elm_lang$core$Platform_Cmd_ops['!'],
-							_elm_lang$core$Native_Utils.update(
-								model,
-								{phxSocket: phxSocket, canvas: newCanvas}),
-							A2(
-								_elm_lang$core$Basics_ops['++'],
-								drawCmds,
-								_elm_lang$core$Native_List.fromArray(
-									[phxCmd])));
-					} else {
-						return newCanvas.viewUpdated ? A2(
-							_elm_lang$core$Platform_Cmd_ops['!'],
-							_elm_lang$core$Native_Utils.update(
-								model,
-								{
-									canvas: _elm_lang$core$Native_Utils.update(
-										newCanvas,
-										{viewUpdated: false})
-								}),
-							_elm_lang$core$Native_List.fromArray(
-								[
-									_alexspurling$quickdraw$Canvas_Ports$updateCanvas(newCanvas.canvasView)
-								])) : {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-					}
-				}();
-				var newModel = _p3._0;
-				var cmd = _p3._1;
-				return {ctor: '_Tuple2', _0: newModel, _1: cmd};
+				var model1 = _elm_lang$core$Native_Utils.update(
+					model,
+					{
+						canvas: _alexspurling$quickdraw$Canvas_Canvas$updateAnimationFrame(model.canvas)
+					});
+				var model2 = A2(_alexspurling$quickdraw$Main$updateFrames, _p29._0, model1);
+				var _p30 = _alexspurling$quickdraw$Main$getJoinLeaveCmd(
+					_alexspurling$quickdraw$Main$getUpdateCanvasCmd(
+						_alexspurling$quickdraw$Main$getSendDrawCmd(
+							_alexspurling$quickdraw$Main$getDrawCmd(model2))));
+				var model3 = _p30._0;
+				var cmd = _p30._1;
+				return {ctor: '_Tuple2', _0: model3, _1: cmd};
 			case 'CanvasMsg':
 				return A2(
 					_elm_lang$core$Platform_Cmd_ops['!'],
 					_elm_lang$core$Native_Utils.update(
 						model,
 						{
-							canvas: A2(_alexspurling$quickdraw$Canvas_Canvas$update, _p2._0, model.canvas)
+							canvas: A2(_alexspurling$quickdraw$Canvas_Canvas$update, _p29._0, model.canvas)
 						}),
 					_elm_lang$core$Native_List.fromArray(
 						[]));
 			case 'PhoenixMsg':
-				var _p7 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$update, _p2._0, model.phxSocket);
-				var phxSocket = _p7._0;
-				var phxCmd = _p7._1;
+				var _p31 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$update, _p29._0, model.phxSocket);
+				var phxSocket = _p31._0;
+				var phxCmd = _p31._1;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -13730,52 +14099,46 @@ var _alexspurling$quickdraw$Main$update = F2(
 						{phxSocket: phxSocket}),
 					_1: A2(_elm_lang$core$Platform_Cmd$map, _alexspurling$quickdraw$Main$PhoenixMsg, phxCmd)
 				};
-			case 'ReceiveChatMessage':
-				var payloadDecoder = A2(_elm_lang$core$Json_Decode_ops[':='], 'body', _alexspurling$quickdraw$Main$lineWithTileDecoder);
+			default:
+				var payloadDecoder = A2(_elm_lang$core$Json_Decode_ops[':='], 'body', _alexspurling$quickdraw$Main$linesOnTilesDecoder);
 				var drawLineCmd = function () {
-					var _p8 = A2(_elm_lang$core$Json_Decode$decodeValue, payloadDecoder, _p2._0);
-					if (_p8.ctor === 'Ok') {
-						return _alexspurling$quickdraw$Canvas_Ports$drawLine(_p8._0);
+					var _p32 = A2(_elm_lang$core$Json_Decode$decodeValue, payloadDecoder, _p29._0);
+					if (_p32.ctor === 'Ok') {
+						return A2(_elm_lang$core$List$map, _alexspurling$quickdraw$Canvas_Ports$drawLine, _p32._0);
 					} else {
-						var _p9 = A2(_elm_lang$core$Debug$log, 'Failed to decode payload', _p8._0);
-						return _elm_lang$core$Platform_Cmd$none;
+						var _p33 = A2(_elm_lang$core$Debug$log, 'Failed to decode payload', _p32._0);
+						return _elm_lang$core$Native_List.fromArray(
+							[]);
 					}
 				}();
-				return {ctor: '_Tuple2', _0: model, _1: drawLineCmd};
-			default:
-				var _p10 = A2(_elm_lang$core$Debug$log, 'I joined a channel', _p2._0);
-				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+				return A2(_elm_lang$core$Platform_Cmd_ops['!'], model, drawLineCmd);
 		}
 	});
 var _alexspurling$quickdraw$Main$CanvasMsg = function (a) {
 	return {ctor: 'CanvasMsg', _0: a};
 };
 var _alexspurling$quickdraw$Main$init = function () {
-	var _p11 = _alexspurling$quickdraw$Canvas_Canvas$init;
-	var canvas = _p11._0;
-	var canvasCmd = _p11._1;
-	var _p12 = _alexspurling$quickdraw$Main$initPhoenix;
-	var phxSocket = _p12._0;
-	var phxCmd = _p12._1;
+	var _p34 = _alexspurling$quickdraw$Canvas_Canvas$init;
+	var canvas = _p34._0;
+	var canvasCmd = _p34._1;
 	return A2(
 		_elm_lang$core$Platform_Cmd_ops['!'],
-		{phxSocket: phxSocket, canvas: canvas},
+		{phxSocket: _alexspurling$quickdraw$Main$initPhxSocket, canvas: canvas, frames: 0, fps: 0, time: 0},
 		_elm_lang$core$Native_List.fromArray(
 			[
-				A2(_elm_lang$core$Platform_Cmd$map, _alexspurling$quickdraw$Main$CanvasMsg, canvasCmd),
-				phxCmd
+				A2(_elm_lang$core$Platform_Cmd$map, _alexspurling$quickdraw$Main$CanvasMsg, canvasCmd)
 			]));
 }();
 var _alexspurling$quickdraw$Main$colourPaletteView = function (model) {
 	var controlToCanvas = function (controlMsg) {
-		var _p13 = controlMsg;
-		switch (_p13.ctor) {
+		var _p35 = controlMsg;
+		switch (_p35.ctor) {
 			case 'ColourSelected':
 				return _alexspurling$quickdraw$Main$CanvasMsg(
-					_alexspurling$quickdraw$Canvas_Canvas$ColourSelected(_p13._0));
+					_alexspurling$quickdraw$Canvas_Canvas$ColourSelected(_p35._0));
 			case 'LineWidthSelected':
 				return _alexspurling$quickdraw$Main$CanvasMsg(
-					_alexspurling$quickdraw$Canvas_Canvas$LineWidthSelected(_p13._0));
+					_alexspurling$quickdraw$Canvas_Canvas$LineWidthSelected(_p35._0));
 			default:
 				return _alexspurling$quickdraw$Main$CanvasMsg(_alexspurling$quickdraw$Canvas_Canvas$ToggleDrawMode);
 		}
@@ -13785,7 +14148,7 @@ var _alexspurling$quickdraw$Main$colourPaletteView = function (model) {
 		controlToCanvas,
 		A4(
 			_alexspurling$quickdraw$Canvas_Controls$colourPalette,
-			_elm_lang$core$Native_Utils.cmp(model.canvas.canvasView.zoom, 500) < 1,
+			_elm_lang$core$Native_Utils.cmp(model.canvas.canvasView.zoom, 5000) < 1,
 			model.canvas.selectedDrawMode,
 			model.canvas.curColour,
 			model.canvas.lineWidth));
@@ -13798,6 +14161,7 @@ var _alexspurling$quickdraw$Main$view = function (model) {
 		_elm_lang$core$Native_List.fromArray(
 			[
 				_alexspurling$quickdraw$Main$colourPaletteView(model),
+				_alexspurling$quickdraw$Main$fpsDiv(model),
 				A2(
 				_elm_lang$html$Html$canvas,
 				_elm_lang$core$Native_List.fromArray(
@@ -13820,7 +14184,7 @@ var _alexspurling$quickdraw$Main$subscriptions = function (model) {
 			[
 				A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$listen, model.phxSocket, _alexspurling$quickdraw$Main$PhoenixMsg),
 				A2(_elm_lang$core$Platform_Sub$map, _alexspurling$quickdraw$Main$CanvasMsg, _alexspurling$quickdraw$Canvas_Canvas$subscriptions),
-				_elm_lang$animation_frame$AnimationFrame$diffs(_alexspurling$quickdraw$Main$AnimationFrame)
+				_elm_lang$animation_frame$AnimationFrame$times(_alexspurling$quickdraw$Main$AnimationFrame)
 			]));
 };
 var _alexspurling$quickdraw$Main$main = {
@@ -13908,6 +14272,13 @@ app.ports.loadCanvas.subscribe(function() {
       app.ports.canvasMouseMoved.send({mousePos: mousePos, mouseDown: mouseDown});
   }, false);
 
+  var getMousePos = function(canvas, touchEvent) {
+    var rect = canvas.getBoundingClientRect();
+    var canvasX = parseInt(touchEvent.touches[0].clientX - rect.left);
+    var canvasY = parseInt(touchEvent.touches[0].clientY - rect.top);
+    return {x: canvasX, y: canvasY};
+  };
+
   canvas.addEventListener("touchstart", function (e) {
       //Toggle the mouse down state to off because we want to
       //set this current position as the starting
@@ -13977,77 +14348,34 @@ app.ports.loadCanvas.subscribe(function() {
   }, false);
 
   document.addEventListener("keydown", function (e) {
-      if (39 == e.keyCode) {
-        pan(1,0);
-      } else if (37 == e.keyCode) {
-        pan(-1,0);
-      } else if (38 == e.keyCode) {
-        pan(0,-1);
+      if (38 == e.keyCode) {
+        app.ports.wheel.send({delta:-30, mousePos:{x:500, y:500}});
       } else if (40 == e.keyCode) {
-        pan(0,1);
+        app.ports.wheel.send({delta:30, mousePos:{x:500, y:500}});
       }
   }, false);
 });
 
-function createTiles() {
-  visibleTiles(function(i, j) {
-    //If the tile doesn't exist yet, create it
-    var tileCol = tileMap[i];
-    if (!tileCol) {
-      tileMap[i] = tileCol = {};
-    }
-    var tile = tileCol[j];
-    if (!tile) {
-      tileCol[j] = tile = newTile(i, j);
-    }
-  });
-}
+/* Draw on the canvas */
 
-function newTile(i, j) {
-  var tile = document.createElement('canvas');
-  tile.width = tileSize;
-  tile.height = tileSize;
-  var tileCtx = tile.getContext('2d');
-  tileCtx.lineCap = 'round';
-  tileCtx.lineJoin = 'round';
-  tileCtx.lineWidth = 3;
-//  tileCtx.strokeRect(0,0,tileSize,tileSize);
-  tileCtx.lineWidth = 10;
-  return tileCtx;
-}
+app.ports.drawLine.subscribe(drawLine);
 
-function copyFromTileMap() {
-  visibleTiles(function(i, j) {
-    copyTileToCanvas(i, j);
-  });
-}
-
-function copyTileToCanvas(i, j) {
-  var tile = tileMap[i][j];
+function drawLine(tileLine) {
+  var i = tileLine.tile[0];
+  var j = tileLine.tile[1];
+  if(typeof tileMap[i] === 'undefined' || typeof tileMap[i][j] === 'undefined') {
+      return;
+  }
   //The position on the canvas on which to place the tiles
   var canvasX = i * (tileSize / scale) - (curX / scale);
   var canvasY = j * (tileSize / scale) - (curY / scale);
   var canvasTileSize = tileSize / scale;
   ctx.clearRect(canvasX, canvasY, (tileSize / scale), (tileSize / scale));
-  ctx.drawImage(tile.canvas, canvasX, canvasY, canvasTileSize, canvasTileSize);
+  drawTileLine(i, j, tileLine.line);
+  copyTileToCanvas(i, j);
 }
 
-function getMousePos(canvas, touchEvent) {
-  var rect = canvas.getBoundingClientRect();
-  var canvasX = parseInt(touchEvent.touches[0].clientX - rect.left);
-  var canvasY = parseInt(touchEvent.touches[0].clientY - rect.top);
-  return {x: canvasX, y: canvasY};
-}
-
-app.ports.drawLine.subscribe(drawLine);
-
-function drawLine(lineWithTile) {
-  drawLineOnTile(lineWithTile.tile.i, lineWithTile.tile.j, lineWithTile.line);
-  copyTileToCanvas(lineWithTile.tile.i, lineWithTile.tile.j);
-}
-
-function drawLineOnTile(i, j, line) {
-
+function drawTileLine(i, j, line) {
   var tile = tileMap[i][j];
 
   //Instead of doing simple straight lines between points A, B and C, we find the
@@ -14055,68 +14383,45 @@ function drawLineOnTile(i, j, line) {
   //curve between these two points. This means we never reach as far as the current
   //mouse position but we get nice smooth curves between mouse positions
   //Algorithm was taken from: https://github.com/Leimi/drawingboard.js
-
-  var curveFromTilePos = posOnTile(line.lastMid, i, j);
-  //Note the curve mid is not the same as the line mid see above
-  var curveMidTilePos = posOnTile(line.lineFrom, i, j);
-  var curveToTilePos = posOnTile(line.lineMid, i, j);
-
   tile.strokeStyle = line.colour;
   tile.lineWidth = line.width;
   tile.beginPath();
-  tile.moveTo(curveFromTilePos.x, curveFromTilePos.y);
-  tile.quadraticCurveTo(curveMidTilePos.x, curveMidTilePos.y, curveToTilePos.x, curveToTilePos.y);
+  tile.moveTo(line.lastMid.x, line.lastMid.y);
+  tile.quadraticCurveTo(line.lineFrom.x, line.lineFrom.y, line.lineMid.x, line.lineMid.y);
   tile.stroke();
   tile.closePath();
 }
 
-function vec(x, y) {
-  return {x:x, y:y};
+function copyTileToCanvas(i, j) {
+  if (tileMap[i] && tileMap[i][j]) {
+    var tile = tileMap[i][j];
+    //The position on the canvas on which to place the tiles
+    var canvasX = i * (tileSize / scale) - (curX / scale);
+    var canvasY = j * (tileSize / scale) - (curY / scale);
+    var canvasTileSize = tileSize / scale;
+    ctx.drawImage(tile.canvas, canvasX, canvasY, canvasTileSize, canvasTileSize);
+  }
 }
 
-//Actually the magnitude of 3D cross product
-function cross(v, w) {
-  return v.x * w.y - v.y * w.x;
-}
+/* Update the current view of the canvas */
 
-function minus(v, w) {
-  return {x:(v.x - w.x), y:(v.y - w.y)};
-}
+app.ports.updateCanvas.subscribe(updateCanvas);
 
-function plus(v, w) {
-  return {x:(v.x + w.x), y:(v.y + w.y)};
-}
-
-function multiply(v, s) {
-  return {x:(v.x * s), y:(v.y * s)};
-}
-
-function div(v, d) {
-  return {x:(v.x / d), y:(v.y / d)};
-}
-
-function tileAt(pos) {
-  var scaledCanvasX = pos.x * scale + curX;
-  var scaledCanvasY = pos.y * scale + curY;
-  return {i: Math.floor(scaledCanvasX / tileSize), j: Math.floor(scaledCanvasY / tileSize)};
-}
-
-/* Get the position on a given tile
- for a given canvasX and canvasY
- */
-function posOnTile(pos, i, j) {
-  var scaledCanvasX = pos.x * scale + curX;
-  var scaledCanvasY = pos.y * scale + curY;
-  var tileX = scaledCanvasX - tileSize * i;
-  var tileY = scaledCanvasY - tileSize * j;
-  return {x:tileX, y:tileY};
-}
-
-function pan(x, y) {
-  curX += 20 * x;
-  curY += 20 * y;
-  console.log("CurXY", curX, curY);
-  createTiles();
+function updateCanvas(canvasViewAndTileDiff) {
+  var canvasView = canvasViewAndTileDiff[0];
+  var tileDiff = canvasViewAndTileDiff[1];
+  createTiles(tileDiff.newTiles);
+  removeTiles(tileDiff.oldTiles);
+  zoom = canvasView.zoom;
+  scale = canvasView.scale;
+  curX = canvasView.curPos.x;
+  curY = canvasView.curPos.y;
+  if (canvas.width != canvasView.size.width) {
+    canvas.width = canvasView.size.width;
+  }
+  if (canvas.height != canvasView.size.height) {
+    canvas.height = canvasView.size.height;
+  }
   copyFromTileMap();
 }
 
@@ -14132,17 +14437,56 @@ function visibleTiles(func) {
   }
 }
 
-app.ports.updateCanvas.subscribe(updateCanvas);
+function createTiles(tilesToCreate) {
+  tilesToCreate.map(function(tilePos) {
+    var i = tilePos[0];
+    var j = tilePos[1];
+    var tileCol = tileMap[i];
+    if (!tileCol) {
+      tileMap[i] = tileCol = {};
+    }
+    if (!tileCol[j]) {
+      tileCol[j] = newTile();
+    }
+  });
+}
 
-function updateCanvas(canvasView) {
-  zoom = canvasView.zoom;
-  scale = canvasView.scale;
-  curX = canvasView.curPos.x;
-  curY = canvasView.curPos.y;
-  canvas.width = canvasView.size.width;
-  canvas.height = canvasView.size.height;
-  createTiles();
-  copyFromTileMap();
+function removeTiles(tilesToRemove) {
+  tilesToRemove.map(function(tilePos) {
+    var i = tilePos[0];
+    var j = tilePos[1];
+    var tileCol = tileMap[i];
+    if (!tileCol) {
+      console.log("Uh, this tile never existed:", tilePos);
+      return;
+    }
+    var tile = tileCol[j];
+    if (!tile) {
+      console.log("Uh, this tile doesn't exist:", tilePos);
+      return;
+    }
+    tileCol[j] = null;
+  });
+}
+
+function newTile() {
+  var tile = document.createElement('canvas');
+  tile.width = tileSize;
+  tile.height = tileSize;
+  var tileCtx = tile.getContext('2d');
+  tileCtx.lineCap = 'round';
+  tileCtx.lineJoin = 'round';
+  tileCtx.lineWidth = 3;
+  tileCtx.strokeRect(0,0,tileSize,tileSize);
+  tileCtx.lineWidth = 10;
+  return tileCtx;
+}
+
+function copyFromTileMap() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  visibleTiles(function(i, j) {
+    copyTileToCanvas(i, j);
+  });
 }
 
 function debug(debugStr) {
