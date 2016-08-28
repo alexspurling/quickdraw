@@ -152,7 +152,7 @@ updateZoom delta mousePos model =
     --point below the mouse stays in the same location
     curPos = Vector.minus scaledCanvasPos (Vector.multiply mousePos scale)
 
-    drawMode = model.selectedDrawMode && (zoom <= 500)
+    drawMode = model.selectedDrawMode && (zoom <= 5000)
 
     curCanvasView = model.canvasView
     newCanvasView = { curCanvasView | zoom = zoom, scale = scale, curPos = curPos }

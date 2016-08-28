@@ -107,19 +107,17 @@ app.ports.loadCanvas.subscribe(function() {
       if (e.deltaMode == 1) {
           delta *= 20;
       }
+      //Some mice give a float delta amount
+      delta = Math.round(delta);
       var mousePos = {x: e.offsetX, y: e.offsetY};
       app.ports.wheel.send({delta:delta, mousePos:mousePos});
   }, false);
 
   document.addEventListener("keydown", function (e) {
-      if (39 == e.keyCode) {
-        pan(1,0);
-      } else if (37 == e.keyCode) {
-        pan(-1,0);
-      } else if (38 == e.keyCode) {
-        pan(0,-1);
+      if (38 == e.keyCode) {
+        app.ports.wheel.send({delta:-30, mousePos:{x:500, y:500}});
       } else if (40 == e.keyCode) {
-        pan(0,1);
+        app.ports.wheel.send({delta:30, mousePos:{x:500, y:500}});
       }
   }, false);
 });
