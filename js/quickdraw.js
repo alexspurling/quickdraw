@@ -14343,6 +14343,8 @@ app.ports.loadCanvas.subscribe(function() {
       if (e.deltaMode == 1) {
           delta *= 20;
       }
+      //Some mice give a float delta amount
+      delta = Math.round(delta);
       var mousePos = {x: e.offsetX, y: e.offsetY};
       app.ports.wheel.send({delta:delta, mousePos:mousePos});
   }, false);
