@@ -10842,6 +10842,10 @@ var _alexspurling$quickdraw$Canvas_Ports$canvasResized = _elm_lang$core$Native_P
 						{width: width, height: height});
 				});
 		}));
+var _alexspurling$quickdraw$Canvas_Ports$testEvent = _elm_lang$core$Native_Platform.incomingPort(
+	'testEvent',
+	_elm_lang$core$Json_Decode$succeed(
+		{}));
 var _alexspurling$quickdraw$Canvas_Ports$MouseMovedEvent = F2(
 	function (a, b) {
 		return {mousePos: a, mouseDown: b};
@@ -12597,6 +12601,10 @@ var _elm_lang$html$Html_App$beginnerProgram = function (_p1) {
 };
 var _elm_lang$html$Html_App$map = _elm_lang$virtual_dom$VirtualDom$map;
 
+var _elm_lang$html$Html_Lazy$lazy3 = _elm_lang$virtual_dom$VirtualDom$lazy3;
+var _elm_lang$html$Html_Lazy$lazy2 = _elm_lang$virtual_dom$VirtualDom$lazy2;
+var _elm_lang$html$Html_Lazy$lazy = _elm_lang$virtual_dom$VirtualDom$lazy;
+
 var _fbonetti$elm_phoenix_socket$Phoenix_Helpers$emptyPayload = _elm_lang$core$Json_Encode$object(
 	_elm_lang$core$Native_List.fromArray(
 		[]));
@@ -13927,11 +13935,24 @@ var _alexspurling$quickdraw$Main$updateFrames = F2(
 			model,
 			{frames: model.frames + 1});
 	});
+var _alexspurling$quickdraw$Main$loop = function (val) {
+	loop:
+	while (true) {
+		if (_elm_lang$core$Native_Utils.eq(val, 0)) {
+			return true;
+		} else {
+			var _v4 = val - 1;
+			val = _v4;
+			continue loop;
+		}
+	}
+};
 var _alexspurling$quickdraw$Main$socketServer = 'ws://localhost:4000/socket/websocket';
 var _alexspurling$quickdraw$Main$Model = F5(
 	function (a, b, c, d, e) {
 		return {phxSocket: a, canvas: b, frames: c, fps: d, time: e};
 	});
+var _alexspurling$quickdraw$Main$TestMsg = {ctor: 'TestMsg'};
 var _alexspurling$quickdraw$Main$ReceiveChatMessage = function (a) {
 	return {ctor: 'ReceiveChatMessage', _0: a};
 };
@@ -13945,9 +13966,69 @@ var _alexspurling$quickdraw$Main$initPhxSocket = A4(
 var _alexspurling$quickdraw$Main$PhoenixMsg = function (a) {
 	return {ctor: 'PhoenixMsg', _0: a};
 };
+var _alexspurling$quickdraw$Main$update = F2(
+	function (msg, model) {
+		var _p9 = msg;
+		switch (_p9.ctor) {
+			case 'AnimationFrame':
+				var model1 = _elm_lang$core$Native_Utils.update(
+					model,
+					{
+						canvas: _alexspurling$quickdraw$Canvas_Canvas$updateAnimationFrame(model.canvas)
+					});
+				var model2 = A2(_alexspurling$quickdraw$Main$updateFrames, _p9._0, model1);
+				var _p10 = _alexspurling$quickdraw$Main$getUpdateCanvasCmd(
+					_alexspurling$quickdraw$Main$getDrawCmd(model2));
+				var model3 = _p10._0;
+				var cmd = _p10._1;
+				return {ctor: '_Tuple2', _0: model3, _1: cmd};
+			case 'TestMsg':
+				var _p11 = _alexspurling$quickdraw$Main$loop(1000000);
+				var _p12 = A2(_elm_lang$core$Debug$log, 'Test msg', 0);
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					model,
+					_elm_lang$core$Native_List.fromArray(
+						[]));
+			case 'CanvasMsg':
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					_elm_lang$core$Native_Utils.update(
+						model,
+						{
+							canvas: A2(_alexspurling$quickdraw$Canvas_Canvas$update, _p9._0, model.canvas)
+						}),
+					_elm_lang$core$Native_List.fromArray(
+						[]));
+			case 'PhoenixMsg':
+				var _p13 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$update, _p9._0, model.phxSocket);
+				var phxSocket = _p13._0;
+				var phxCmd = _p13._1;
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{phxSocket: phxSocket}),
+					_1: A2(_elm_lang$core$Platform_Cmd$map, _alexspurling$quickdraw$Main$PhoenixMsg, phxCmd)
+				};
+			default:
+				var payloadDecoder = A2(_elm_lang$core$Json_Decode_ops[':='], 'body', _alexspurling$quickdraw$Main$linesOnTilesDecoder);
+				var drawLineCmd = function () {
+					var _p14 = A2(_elm_lang$core$Json_Decode$decodeValue, payloadDecoder, _p9._0);
+					if (_p14.ctor === 'Ok') {
+						return A2(_elm_lang$core$List$map, _alexspurling$quickdraw$Canvas_Ports$drawLine, _p14._0);
+					} else {
+						var _p15 = A2(_elm_lang$core$Debug$log, 'Failed to decode payload', _p14._0);
+						return _elm_lang$core$Native_List.fromArray(
+							[]);
+					}
+				}();
+				return A2(_elm_lang$core$Platform_Cmd_ops['!'], model, drawLineCmd);
+		}
+	});
 var _alexspurling$quickdraw$Main$sendDraw = F2(
-	function (tileLine, _p9) {
-		var _p10 = _p9;
+	function (tileLine, _p16) {
+		var _p17 = _p16;
 		var channel = _alexspurling$quickdraw$Main$getChannelForTile(tileLine.tile);
 		var payload = _elm_lang$core$Json_Encode$object(
 			_elm_lang$core$Native_List.fromArray(
@@ -13962,165 +14043,111 @@ var _alexspurling$quickdraw$Main$sendDraw = F2(
 			_fbonetti$elm_phoenix_socket$Phoenix_Push$withPayload,
 			payload,
 			A2(_fbonetti$elm_phoenix_socket$Phoenix_Push$init, 'new:msg', channel));
-		var _p11 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$push, push, _p10._0);
-		var newPhxSocket = _p11._0;
-		var phxCmd = _p11._1;
+		var _p18 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$push, push, _p17._0);
+		var newPhxSocket = _p18._0;
+		var phxCmd = _p18._1;
 		return A2(
 			_elm_lang$core$Platform_Cmd_ops['!'],
 			newPhxSocket,
 			_elm_lang$core$Native_List.fromArray(
 				[
-					_p10._1,
+					_p17._1,
 					A2(_elm_lang$core$Platform_Cmd$map, _alexspurling$quickdraw$Main$PhoenixMsg, phxCmd)
 				]));
 	});
-var _alexspurling$quickdraw$Main$getSendDrawCmd = function (_p12) {
-	var _p13 = _p12;
-	var _p17 = _p13._1;
-	var _p16 = _p13._0;
-	var _p14 = _p16.canvas.tileLines;
-	if (_p14.ctor === 'Just') {
-		var _p15 = A3(
+var _alexspurling$quickdraw$Main$getSendDrawCmd = function (_p19) {
+	var _p20 = _p19;
+	var _p24 = _p20._1;
+	var _p23 = _p20._0;
+	var _p21 = _p23.canvas.tileLines;
+	if (_p21.ctor === 'Just') {
+		var _p22 = A3(
 			_elm_lang$core$List$foldl,
 			_alexspurling$quickdraw$Main$sendDraw,
-			{ctor: '_Tuple2', _0: _p16.phxSocket, _1: _elm_lang$core$Platform_Cmd$none},
-			_p14._0);
-		var phxSocket = _p15._0;
-		var phxCmd = _p15._1;
+			{ctor: '_Tuple2', _0: _p23.phxSocket, _1: _elm_lang$core$Platform_Cmd$none},
+			_p21._0);
+		var phxSocket = _p22._0;
+		var phxCmd = _p22._1;
 		return A2(
 			_elm_lang$core$Platform_Cmd_ops['!'],
 			_elm_lang$core$Native_Utils.update(
-				_p16,
+				_p23,
 				{phxSocket: phxSocket}),
 			_elm_lang$core$Native_List.fromArray(
-				[_p17, phxCmd]));
+				[_p24, phxCmd]));
 	} else {
 		return A2(
 			_elm_lang$core$Platform_Cmd_ops['!'],
-			_p16,
+			_p23,
 			_elm_lang$core$Native_List.fromArray(
-				[_p17]));
+				[_p24]));
 	}
 };
 var _alexspurling$quickdraw$Main$joinChannel = F2(
-	function (channelToJoin, _p18) {
-		var _p19 = _p18;
+	function (channelToJoin, _p25) {
+		var _p26 = _p25;
 		var channel = _fbonetti$elm_phoenix_socket$Phoenix_Channel$init(channelToJoin);
-		var _p20 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$join, channel, _p19._0);
-		var newPhxSocket = _p20._0;
-		var phxCmd = _p20._1;
+		var _p27 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$join, channel, _p26._0);
+		var newPhxSocket = _p27._0;
+		var phxCmd = _p27._1;
 		return A2(
 			_elm_lang$core$Platform_Cmd_ops['!'],
 			newPhxSocket,
 			_elm_lang$core$Native_List.fromArray(
 				[
-					_p19._1,
+					_p26._1,
 					A2(_elm_lang$core$Platform_Cmd$map, _alexspurling$quickdraw$Main$PhoenixMsg, phxCmd)
 				]));
 	});
 var _alexspurling$quickdraw$Main$leaveChannel = F2(
-	function (channelToLeave, _p21) {
-		var _p22 = _p21;
-		var _p23 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$leave, channelToLeave, _p22._0);
-		var newPhxSocket = _p23._0;
-		var phxCmd = _p23._1;
+	function (channelToLeave, _p28) {
+		var _p29 = _p28;
+		var _p30 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$leave, channelToLeave, _p29._0);
+		var newPhxSocket = _p30._0;
+		var phxCmd = _p30._1;
 		return A2(
 			_elm_lang$core$Platform_Cmd_ops['!'],
 			newPhxSocket,
 			_elm_lang$core$Native_List.fromArray(
 				[
-					_p22._1,
+					_p29._1,
 					A2(_elm_lang$core$Platform_Cmd$map, _alexspurling$quickdraw$Main$PhoenixMsg, phxCmd)
 				]));
 	});
-var _alexspurling$quickdraw$Main$getJoinLeaveCmd = function (_p24) {
-	var _p25 = _p24;
-	var _p28 = _p25._0;
-	var channelsToLeave = A2(_elm_lang$core$List$map, _alexspurling$quickdraw$Main$getChannelForTile, _p28.canvas.tileDiff.oldTiles);
-	var channelsToJoin = A2(_elm_lang$core$List$map, _alexspurling$quickdraw$Main$getChannelForTile, _p28.canvas.tileDiff.newTiles);
-	var _p26 = A3(
+var _alexspurling$quickdraw$Main$getJoinLeaveCmd = function (_p31) {
+	var _p32 = _p31;
+	var _p35 = _p32._0;
+	var channelsToLeave = A2(_elm_lang$core$List$map, _alexspurling$quickdraw$Main$getChannelForTile, _p35.canvas.tileDiff.oldTiles);
+	var channelsToJoin = A2(_elm_lang$core$List$map, _alexspurling$quickdraw$Main$getChannelForTile, _p35.canvas.tileDiff.newTiles);
+	var _p33 = A3(
 		_elm_lang$core$List$foldl,
 		_alexspurling$quickdraw$Main$joinChannel,
-		{ctor: '_Tuple2', _0: _p28.phxSocket, _1: _elm_lang$core$Platform_Cmd$none},
+		{ctor: '_Tuple2', _0: _p35.phxSocket, _1: _elm_lang$core$Platform_Cmd$none},
 		channelsToJoin);
-	var phxSocket1 = _p26._0;
-	var phxCmd1 = _p26._1;
-	var _p27 = A3(
+	var phxSocket1 = _p33._0;
+	var phxCmd1 = _p33._1;
+	var _p34 = A3(
 		_elm_lang$core$List$foldl,
 		_alexspurling$quickdraw$Main$leaveChannel,
 		{ctor: '_Tuple2', _0: phxSocket1, _1: phxCmd1},
 		channelsToLeave);
-	var phxSocket2 = _p27._0;
-	var phxCmd2 = _p27._1;
+	var phxSocket2 = _p34._0;
+	var phxCmd2 = _p34._1;
 	return A2(
 		_elm_lang$core$Platform_Cmd_ops['!'],
 		_elm_lang$core$Native_Utils.update(
-			_p28,
+			_p35,
 			{phxSocket: phxSocket2}),
 		_elm_lang$core$Native_List.fromArray(
-			[_p25._1, phxCmd2]));
+			[_p32._1, phxCmd2]));
 };
-var _alexspurling$quickdraw$Main$update = F2(
-	function (msg, model) {
-		var _p29 = msg;
-		switch (_p29.ctor) {
-			case 'AnimationFrame':
-				var model1 = _elm_lang$core$Native_Utils.update(
-					model,
-					{
-						canvas: _alexspurling$quickdraw$Canvas_Canvas$updateAnimationFrame(model.canvas)
-					});
-				var model2 = A2(_alexspurling$quickdraw$Main$updateFrames, _p29._0, model1);
-				var _p30 = _alexspurling$quickdraw$Main$getJoinLeaveCmd(
-					_alexspurling$quickdraw$Main$getUpdateCanvasCmd(
-						_alexspurling$quickdraw$Main$getSendDrawCmd(
-							_alexspurling$quickdraw$Main$getDrawCmd(model2))));
-				var model3 = _p30._0;
-				var cmd = _p30._1;
-				return {ctor: '_Tuple2', _0: model3, _1: cmd};
-			case 'CanvasMsg':
-				return A2(
-					_elm_lang$core$Platform_Cmd_ops['!'],
-					_elm_lang$core$Native_Utils.update(
-						model,
-						{
-							canvas: A2(_alexspurling$quickdraw$Canvas_Canvas$update, _p29._0, model.canvas)
-						}),
-					_elm_lang$core$Native_List.fromArray(
-						[]));
-			case 'PhoenixMsg':
-				var _p31 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$update, _p29._0, model.phxSocket);
-				var phxSocket = _p31._0;
-				var phxCmd = _p31._1;
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{phxSocket: phxSocket}),
-					_1: A2(_elm_lang$core$Platform_Cmd$map, _alexspurling$quickdraw$Main$PhoenixMsg, phxCmd)
-				};
-			default:
-				var payloadDecoder = A2(_elm_lang$core$Json_Decode_ops[':='], 'body', _alexspurling$quickdraw$Main$linesOnTilesDecoder);
-				var drawLineCmd = function () {
-					var _p32 = A2(_elm_lang$core$Json_Decode$decodeValue, payloadDecoder, _p29._0);
-					if (_p32.ctor === 'Ok') {
-						return A2(_elm_lang$core$List$map, _alexspurling$quickdraw$Canvas_Ports$drawLine, _p32._0);
-					} else {
-						var _p33 = A2(_elm_lang$core$Debug$log, 'Failed to decode payload', _p32._0);
-						return _elm_lang$core$Native_List.fromArray(
-							[]);
-					}
-				}();
-				return A2(_elm_lang$core$Platform_Cmd_ops['!'], model, drawLineCmd);
-		}
-	});
 var _alexspurling$quickdraw$Main$CanvasMsg = function (a) {
 	return {ctor: 'CanvasMsg', _0: a};
 };
 var _alexspurling$quickdraw$Main$init = function () {
-	var _p34 = _alexspurling$quickdraw$Canvas_Canvas$init;
-	var canvas = _p34._0;
-	var canvasCmd = _p34._1;
+	var _p36 = _alexspurling$quickdraw$Canvas_Canvas$init;
+	var canvas = _p36._0;
+	var canvasCmd = _p36._1;
 	return A2(
 		_elm_lang$core$Platform_Cmd_ops['!'],
 		{phxSocket: _alexspurling$quickdraw$Main$initPhxSocket, canvas: canvas, frames: 0, fps: 0, time: 0},
@@ -14131,14 +14158,14 @@ var _alexspurling$quickdraw$Main$init = function () {
 }();
 var _alexspurling$quickdraw$Main$colourPaletteView = function (model) {
 	var controlToCanvas = function (controlMsg) {
-		var _p35 = controlMsg;
-		switch (_p35.ctor) {
+		var _p37 = controlMsg;
+		switch (_p37.ctor) {
 			case 'ColourSelected':
 				return _alexspurling$quickdraw$Main$CanvasMsg(
-					_alexspurling$quickdraw$Canvas_Canvas$ColourSelected(_p35._0));
+					_alexspurling$quickdraw$Canvas_Canvas$ColourSelected(_p37._0));
 			case 'LineWidthSelected':
 				return _alexspurling$quickdraw$Main$CanvasMsg(
-					_alexspurling$quickdraw$Canvas_Canvas$LineWidthSelected(_p35._0));
+					_alexspurling$quickdraw$Canvas_Canvas$LineWidthSelected(_p37._0));
 			default:
 				return _alexspurling$quickdraw$Main$CanvasMsg(_alexspurling$quickdraw$Canvas_Canvas$ToggleDrawMode);
 		}
@@ -14182,14 +14209,22 @@ var _alexspurling$quickdraw$Main$subscriptions = function (model) {
 	return _elm_lang$core$Platform_Sub$batch(
 		_elm_lang$core$Native_List.fromArray(
 			[
-				A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$listen, model.phxSocket, _alexspurling$quickdraw$Main$PhoenixMsg),
 				A2(_elm_lang$core$Platform_Sub$map, _alexspurling$quickdraw$Main$CanvasMsg, _alexspurling$quickdraw$Canvas_Canvas$subscriptions),
-				_elm_lang$animation_frame$AnimationFrame$times(_alexspurling$quickdraw$Main$AnimationFrame)
+				_elm_lang$animation_frame$AnimationFrame$times(_alexspurling$quickdraw$Main$AnimationFrame),
+				_alexspurling$quickdraw$Canvas_Ports$testEvent(
+				function (_p38) {
+					return _alexspurling$quickdraw$Main$TestMsg;
+				})
 			]));
 };
 var _alexspurling$quickdraw$Main$main = {
 	main: _elm_lang$html$Html_App$program(
-		{init: _alexspurling$quickdraw$Main$init, view: _alexspurling$quickdraw$Main$view, update: _alexspurling$quickdraw$Main$update, subscriptions: _alexspurling$quickdraw$Main$subscriptions})
+		{
+			init: _alexspurling$quickdraw$Main$init,
+			view: _elm_lang$html$Html_Lazy$lazy(_alexspurling$quickdraw$Main$view),
+			update: _alexspurling$quickdraw$Main$update,
+			subscriptions: _alexspurling$quickdraw$Main$subscriptions
+		})
 };
 
 var Elm = {};
@@ -14290,41 +14325,6 @@ app.ports.loadCanvas.subscribe(function() {
       app.ports.canvasMouseMoved.send({mousePos: getMousePos(canvas, e), mouseDown: true});
   }, false);
 
-  //Mobile gesture recognition
-  var hammer = new Hammer(canvas);
-  hammer.get('pinch').set({ enable: true });
-  hammer.get('pan').set({ direction: Hammer.DIRECTION_ALL });
-  hammer.on("pan", function(ev) {
-    //TODO implement drag
-  });
-  var pinch = new Hammer.Pinch();
-  hammer.add([pinch]);
-
-  hammer.on("pinch pinchstart pinchend", function(ev) {
-
-      //Get the point on the canvas around which we want to scale
-      //This point should remain fixed as scale changes
-      var scaledCanvasX = (canvas.width / 2) * scale + curX;
-      var scaledCanvasY = (canvas.height / 2) * scale + curY;
-
-      var hammerScale = 1 / ev.scale;
-      scale = Math.max(0.5, Math.min(lastPinchScale * hammerScale, 8));
-      zoom = Math.log2(scale) * 1000;
-
-      //Adjust the current grid position so that the previous
-      //point below the mouse stays in the same location
-      curX = scaledCanvasX - ((canvas.width / 2) * scale);
-      curY = scaledCanvasY - ((canvas.height / 2) * scale);
-
-      if(ev.type == "pinchend"){
-          lastPinchScale = scale;
-          debug("Pinch end scale is " + scale);
-      }
-
-      createTiles();
-      copyFromTileMap();
-  });
-
   canvas.addEventListener("mousedown", function (e) {
       var mousePos = {x: e.offsetX, y: e.offsetY};
       gridPosDragStart = {x: curX, y: curY};
@@ -14353,7 +14353,8 @@ app.ports.loadCanvas.subscribe(function() {
       if (38 == e.keyCode) {
         app.ports.wheel.send({delta:-30, mousePos:{x:500, y:500}});
       } else if (40 == e.keyCode) {
-        app.ports.wheel.send({delta:30, mousePos:{x:500, y:500}});
+//        app.ports.wheel.send({delta:30, mousePos:{x:500, y:500}});
+        app.ports.testEvent.send({});
       }
   }, false);
 });
@@ -14412,6 +14413,17 @@ app.ports.updateCanvas.subscribe(updateCanvas);
 function updateCanvas(canvasViewAndTileDiff) {
   var canvasView = canvasViewAndTileDiff[0];
   var tileDiff = canvasViewAndTileDiff[1];
+
+  var noChanges =
+     tileDiff.newTiles.length === 0 &&
+     tileDiff.oldTiles.length === 0 &&
+     zoom == canvasView.zoom &&
+     scale == canvasView.scale &&
+     curX == canvasView.curPos.x &&
+     curY == canvasView.curPos.y &&
+     canvas.width == canvasView.size.width &&
+     canvas.height == canvasView.size.height;
+
   createTiles(tileDiff.newTiles);
   removeTiles(tileDiff.oldTiles);
   zoom = canvasView.zoom;
@@ -14424,7 +14436,10 @@ function updateCanvas(canvasViewAndTileDiff) {
   if (canvas.height != canvasView.size.height) {
     canvas.height = canvasView.size.height;
   }
-  copyFromTileMap();
+
+  if (!noChanges) {
+    copyFromTileMap();
+  }
 }
 
 function visibleTiles(func) {
