@@ -4,6 +4,7 @@ import AnimationFrame
 import Html.App as App
 import Html exposing (Html, div, text, canvas)
 import Html.Attributes exposing (id, style, class)
+import Html.Lazy exposing (lazy)
 
 import Json.Encode as JE exposing (Value, object)
 import Json.Decode as JD exposing ((:=), object2, object5, tuple2)
@@ -20,7 +21,7 @@ import Canvas.Controls as Controls
 import Canvas.Vector exposing (Position)
 
 main =
-   App.program { init = init, view = view, update = update, subscriptions = subscriptions }
+   App.program { init = init, view = lazy view, update = update, subscriptions = subscriptions }
 
 type alias Model =
   { phxSocket : Phoenix.Socket.Socket Msg
@@ -35,6 +36,7 @@ type Msg =
   | CanvasMsg Canvas.Msg
   | PhoenixMsg (Phoenix.Socket.Msg Msg)
   | ReceiveChatMessage JE.Value
+  | TestMsg
 
 -- INIT
 
@@ -73,11 +75,17 @@ update msg model =
         (model3, cmd) =
           model2
             |> getDrawCmd
-            |> getSendDrawCmd
+--            |> getSendDrawCmd
             |> getUpdateCanvasCmd
-            |> getJoinLeaveCmd
+--            |> getJoinLeaveCmd
       in
         (model3, cmd)
+    TestMsg ->
+      let
+        _ = Debug.log "Test msg" 0
+        _ = loop 1000000
+      in
+        model ! []
     CanvasMsg canvasMsg ->
         {model | canvas = Canvas.update canvasMsg model.canvas} ! []
     PhoenixMsg msg ->
@@ -102,6 +110,13 @@ update msg model =
                 []
       in
         model ! drawLineCmd
+
+loop : Int -> Bool
+loop val =
+  if val == 0 then
+    True
+  else
+    loop (val - 1)
 
 updateFrames : Time -> Model -> Model
 updateFrames time model =
@@ -296,7 +311,8 @@ view model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
   Sub.batch
-    [ Phoenix.Socket.listen model.phxSocket PhoenixMsg
-    , Sub.map CanvasMsg (Canvas.subscriptions)
+    [ Sub.map CanvasMsg (Canvas.subscriptions)
     , AnimationFrame.times AnimationFrame
+    , testEvent (\_ -> TestMsg)
+--    , Phoenix.Socket.listen model.phxSocket PhoenixMsg
     ]

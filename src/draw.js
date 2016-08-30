@@ -54,41 +54,6 @@ app.ports.loadCanvas.subscribe(function() {
       app.ports.canvasMouseMoved.send({mousePos: getMousePos(canvas, e), mouseDown: true});
   }, false);
 
-  //Mobile gesture recognition
-  var hammer = new Hammer(canvas);
-  hammer.get('pinch').set({ enable: true });
-  hammer.get('pan').set({ direction: Hammer.DIRECTION_ALL });
-  hammer.on("pan", function(ev) {
-    //TODO implement drag
-  });
-  var pinch = new Hammer.Pinch();
-  hammer.add([pinch]);
-
-  hammer.on("pinch pinchstart pinchend", function(ev) {
-
-      //Get the point on the canvas around which we want to scale
-      //This point should remain fixed as scale changes
-      var scaledCanvasX = (canvas.width / 2) * scale + curX;
-      var scaledCanvasY = (canvas.height / 2) * scale + curY;
-
-      var hammerScale = 1 / ev.scale;
-      scale = Math.max(0.5, Math.min(lastPinchScale * hammerScale, 8));
-      zoom = Math.log2(scale) * 1000;
-
-      //Adjust the current grid position so that the previous
-      //point below the mouse stays in the same location
-      curX = scaledCanvasX - ((canvas.width / 2) * scale);
-      curY = scaledCanvasY - ((canvas.height / 2) * scale);
-
-      if(ev.type == "pinchend"){
-          lastPinchScale = scale;
-          debug("Pinch end scale is " + scale);
-      }
-
-      createTiles();
-      copyFromTileMap();
-  });
-
   canvas.addEventListener("mousedown", function (e) {
       var mousePos = {x: e.offsetX, y: e.offsetY};
       gridPosDragStart = {x: curX, y: curY};
@@ -117,7 +82,8 @@ app.ports.loadCanvas.subscribe(function() {
       if (38 == e.keyCode) {
         app.ports.wheel.send({delta:-30, mousePos:{x:500, y:500}});
       } else if (40 == e.keyCode) {
-        app.ports.wheel.send({delta:30, mousePos:{x:500, y:500}});
+//        app.ports.wheel.send({delta:30, mousePos:{x:500, y:500}});
+        app.ports.testEvent.send({});
       }
   }, false);
 });
@@ -176,6 +142,17 @@ app.ports.updateCanvas.subscribe(updateCanvas);
 function updateCanvas(canvasViewAndTileDiff) {
   var canvasView = canvasViewAndTileDiff[0];
   var tileDiff = canvasViewAndTileDiff[1];
+
+  var noChanges =
+     tileDiff.newTiles.length === 0 &&
+     tileDiff.oldTiles.length === 0 &&
+     zoom == canvasView.zoom &&
+     scale == canvasView.scale &&
+     curX == canvasView.curPos.x &&
+     curY == canvasView.curPos.y &&
+     canvas.width == canvasView.size.width &&
+     canvas.height == canvasView.size.height;
+
   createTiles(tileDiff.newTiles);
   removeTiles(tileDiff.oldTiles);
   zoom = canvasView.zoom;
@@ -188,7 +165,10 @@ function updateCanvas(canvasViewAndTileDiff) {
   if (canvas.height != canvasView.size.height) {
     canvas.height = canvasView.size.height;
   }
-  copyFromTileMap();
+
+  if (!noChanges) {
+    copyFromTileMap();
+  }
 }
 
 function visibleTiles(func) {

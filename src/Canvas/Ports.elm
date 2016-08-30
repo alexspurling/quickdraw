@@ -60,3 +60,5 @@ port wheel : (WheelEvent -> msg) -> Sub msg
 port updateCanvas : (CanvasView, TileDiff) -> Cmd msg
 
 port canvasResized : (CanvasSize -> msg) -> Sub msg
+
+port testEvent : ({} -> msg) -> Sub msg
